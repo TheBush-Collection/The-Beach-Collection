@@ -123,6 +123,7 @@ export default function AdminRatesCalendar() {
   // Filter rates by selected property and room
   const filteredRates = useMemo(() => {
     return rates.filter(rate => {
+      if (!rate?.property || !rate?.room) return false; // Skip rates with missing property or room
       if (selectedProperty && rate.property._id !== selectedProperty) return false;
       if (selectedRoom && selectedRoom !== 'all' && rate.room._id !== selectedRoom) return false;
       return true;

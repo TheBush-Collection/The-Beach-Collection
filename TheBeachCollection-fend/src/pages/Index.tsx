@@ -962,7 +962,7 @@ export default function Index() {
                     <svg className="w-5 h-5 text-[#92AAD1]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                   </div>
                   <div>
-                    <p className="text-white font-medium">info@thebeachcollection.co.ke</p>
+                    <p className="text-white font-medium">info@thebushcollection.africa</p>
                     <p className="text-sm">We reply within 24hrs</p>
                   </div>
                 </li>

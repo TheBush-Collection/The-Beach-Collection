@@ -86,8 +86,8 @@ export default function Navigation() {
           {/* Logo */}
           <Link to="/" className="flex items-center group">
             <img
-              src="/images/Bush Collection Logo.webp"
-              alt="The Bush Collection"
+              src=""
+              alt="The Beach Collection"
               className="h-14 w-auto transition-transform group-hover:scale-105"
             />
           </Link>

@@ -1098,7 +1098,7 @@ export default function PropertyDetail() {
                   </div>
                   <div>
                     <div className="text-sm text-[#48547C]/60">Email</div>
-                    <div className="font-medium text-[#33343B]">info@thebeachcollection.africa</div>
+                    <div className="font-medium text-[#33343B]">info@thebushcollection.africa</div>
                   </div>
                 </div>
               </div>
