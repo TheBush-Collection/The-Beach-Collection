@@ -2,28 +2,11 @@ import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
 import Property from "../models/property.model.js";
 import Package from "../models/package.model.js";
+import Room from "../models/room.model.js";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
-import { subscribeContactInternal } from "./mailchimp.controller.js";
-import nodemailer from 'nodemailer';
+import { subscribeContactInternal, sendViaMandrill } from "./mailchimp.controller.js";
 import PDFDocument from 'pdfkit';
-
-// Helper to create SMTP transporter from env
-const getSmtpTransporter = () => {
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (!smtpHost) return null;
-
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
-  });
-};
 
 // Generate booking ID
 const generateBookingId = () => {
@@ -35,11 +18,327 @@ const generateConfirmationNumber = () => {
   return 'SB' + Date.now().toString().slice(-8) + Math.random().toString(36).substr(2, 4).toUpperCase();
 };
 
-// Helper to send booking notification via Mailchimp service
-const sendBookingNotification = async (booking, type = 'booking_created') => {
-  if (!booking || !booking.customerEmail) return;
+// ── Shared helper: build a comprehensive PDF receipt buffer from a populated booking ──
+const LOGO_URL = 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1770803318/PNG-LOGO_1_xlw56b.png';
 
-  const email = booking.customerEmail || booking.customerEmail;
+// Fetch logo once and cache it in memory
+let _logoBuffer = null;
+const fetchLogo = async () => {
+  if (_logoBuffer) return _logoBuffer;
+  try {
+    const resp = await fetch(LOGO_URL);
+    if (!resp.ok) throw new Error('Logo fetch failed');
+    const arrayBuf = await resp.arrayBuffer();
+    _logoBuffer = Buffer.from(arrayBuf);
+    return _logoBuffer;
+  } catch (e) {
+    console.warn('Could not fetch logo for PDF:', e.message);
+    return null;
+  }
+};
+
+const buildReceiptPdf = async (booking) => {
+  const logo = await fetchLogo();
+
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ size: 'A4', margin: 0 });
+      const chunks = [];
+      doc.on('data', (c) => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+
+      // ── Colour palette ──
+      const gold   = '#C9A961';
+      const dark   = '#1A1A1A';
+      const mid    = '#4A4A4A';
+      const light  = '#777777';
+      const bg     = '#FAFAFA';
+      const white  = '#FFFFFF';
+      const pw     = 595.28; // A4 width in points
+      const mL     = 45;
+      const mR     = 45;
+      const cW     = pw - mL - mR; // content width
+
+      const fmt  = (d) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+      const fCur = (v) => v != null ? `$${Number(v).toFixed(2)}` : '$0.00';
+      const propName = booking.property?.name || booking.property_name || 'N/A';
+      const pkgName  = booking.package?.name  || booking.package_name  || 'N/A';
+      const confirmNum = booking.confirmationNumber || '';
+      const costs = booking.costs || {};
+
+      // Back-compute cost breakdown for legacy bookings that only have a total
+      const totalAmt   = Number(costs.total) || 0;
+      if (totalAmt > 0 && !costs.basePrice && !costs.serviceFee && !costs.taxes) {
+        // Legacy bookings stored total = base * 1.25  (10% service + 15% tax)
+        const isProperty = booking.bookingType === 'property';
+        const taxRate = isProperty ? 0.15 : 0.12;
+        const feeRate = 0.10;
+        const divisor = 1 + feeRate + taxRate;
+        costs.basePrice   = Math.round((totalAmt / divisor) * 100) / 100;
+        costs.serviceFee  = Math.round((costs.basePrice * feeRate) * 100) / 100;
+        costs.taxes       = Math.round((costs.basePrice * taxRate) * 100) / 100;
+        costs.subtotal    = Math.round((costs.basePrice + costs.serviceFee) * 100) / 100;
+      }
+
+      const amountPaid = Number(booking.amountPaid) || 0;
+      const balance    = Math.max(totalAmt - amountPaid, 0);
+
+      let y = 0;
+      const ensureSpace = (need) => { if (y > 800 - need) { doc.addPage(); y = 40; } };
+
+      // ═══════════════════════════ HEADER BAR ═══════════════════════════
+      doc.rect(0, 0, pw, 110).fill(white);
+      if (logo) {
+        try { doc.image(logo, mL, 18, { height: 55 }); } catch (_) { /* skip logo */ }
+      }
+      doc.fill(dark).font('Helvetica-Bold').fontSize(22).text('BOOKING RECEIPT', mL + 180, 28, { width: cW - 180, align: 'right' });
+      doc.fill(gold).font('Helvetica').fontSize(10)
+        .text(`Receipt #${confirmNum || booking.bookingId}`, mL + 180, 56, { width: cW - 180, align: 'right' });
+      doc.fill(light).fontSize(9)
+        .text(`Date: ${fmt(booking.createdAt)}`, mL + 180, 72, { width: cW - 180, align: 'right' });
+
+      // Gold accent line
+      doc.rect(0, 110, pw, 3).fill(gold);
+      y = 130;
+
+      // ═══════════════════════════ STATUS BADGE ═══════════════════════════
+      const statusText = (booking.status || 'pending').toUpperCase();
+      const statusColors = {
+        PENDING: '#F59E0B', DEPOSIT_PAID: '#F97316', CONFIRMED: '#3B82F6',
+        FULLY_PAID: '#10B981', CANCELLED: '#EF4444', COMPLETED: '#6B7280'
+      };
+      const badgeColor = statusColors[statusText] || gold;
+      const badgeW = 110;
+      doc.roundedRect(pw - mR - badgeW, y, badgeW, 22, 4).fill(badgeColor);
+      doc.fill(white).font('Helvetica-Bold').fontSize(9).text(statusText, pw - mR - badgeW, y + 6, { width: badgeW, align: 'center' });
+
+      // ─── Booking ID row ───
+      doc.fill(light).font('Helvetica').fontSize(9).text('Booking ID', mL, y + 2);
+      doc.fill(dark).font('Helvetica-Bold').fontSize(10).text(booking.bookingId || '', mL, y + 13);
+      y += 40;
+
+      // ═══════════════════════════ TWO-COLUMN: CUSTOMER | PROPERTY ═══════════════════════════
+      const colW = (cW - 20) / 2;
+
+      // Section label helper
+      const sectionLabel = (text, x, yy) => {
+        doc.fill(gold).font('Helvetica-Bold').fontSize(8).text(text.toUpperCase(), x, yy);
+        doc.moveTo(x, yy + 12).lineTo(x + colW, yy + 12).strokeColor(gold).lineWidth(0.5).stroke();
+        return yy + 18;
+      };
+
+      // Field helper
+      const field = (lbl, val, x, yy) => {
+        doc.fill(light).font('Helvetica').fontSize(8).text(lbl, x, yy);
+        doc.fill(dark).font('Helvetica').fontSize(9.5).text(String(val ?? 'N/A'), x, yy + 10);
+        return yy + 24;
+      };
+
+      // Left column – Customer
+      let yL = sectionLabel('Customer Details', mL, y);
+      yL = field('Name', booking.customerName, mL, yL);
+      yL = field('Email', booking.customerEmail, mL, yL);
+      if (booking.customerPhone) yL = field('Phone', `${booking.customerCountryCode || ''} ${booking.customerPhone}`.trim(), mL, yL);
+
+      // Right column – Property/Package
+      const rX = mL + colW + 20;
+      let yR = sectionLabel('Property / Package', rX, y);
+      if (booking.bookingType === 'property') {
+        yR = field('Property', propName, rX, yR);
+        if (booking.property?.location) yR = field('Location', booking.property.location, rX, yR);
+      }
+      if (booking.bookingType === 'package' || (pkgName && pkgName !== 'N/A')) {
+        yR = field('Package', pkgName, rX, yR);
+        if (booking.package?.duration) yR = field('Duration', booking.package.duration, rX, yR);
+      }
+      y = Math.max(yL, yR) + 10;
+
+      // ═══════════════════════════ STAY DETAILS CARD ═══════════════════════════
+      ensureSpace(90);
+      doc.rect(mL, y, cW, 70).fillAndStroke(bg, '#E5E5E5');
+      const stayFields = [
+        { lbl: 'Check-in', val: fmt(booking.checkInDate) },
+        { lbl: 'Check-out', val: fmt(booking.checkOutDate) },
+        { lbl: 'Nights', val: booking.nights || 0 },
+        { lbl: 'Guests', val: `${booking.adults || 0} Adults, ${booking.children || 0} Children` },
+      ];
+      const sfW = cW / stayFields.length;
+      stayFields.forEach((sf, i) => {
+        const sx = mL + i * sfW + 12;
+        doc.fill(light).font('Helvetica').fontSize(8).text(sf.lbl, sx, y + 14);
+        doc.fill(dark).font('Helvetica-Bold').fontSize(10).text(String(sf.val), sx, y + 28);
+      });
+      if (booking.specialRequests && booking.specialRequests !== 'None') {
+        doc.fill(light).font('Helvetica').fontSize(8).text('Special Requests:', mL + 12, y + 48);
+        doc.fill(mid).font('Helvetica').fontSize(9).text(booking.specialRequests, mL + 100, y + 48, { width: cW - 120 });
+      }
+      y += 80;
+
+      // ═══════════════════════════ ROOMS TABLE ═══════════════════════════
+      const rooms = booking.rooms || [];
+      if (rooms.length > 0) {
+        const bookingNights = Number(booking.nights) || 1;
+
+        ensureSpace(50 + rooms.length * 22);
+        y = drawTableSection(doc, 'Room Selection', y, mL, cW,
+          ['Room', 'Qty', 'Guests', 'Price/Night/Pax', 'Subtotal'],
+          [0.30, 0.10, 0.12, 0.24, 0.24],
+          rooms.map(rm => {
+            const ppnpp = Number(rm.pricePerNightPerPerson) || 0;
+            const guests = Number(rm.guests) || 1;
+            const qty = Number(rm.quantity) || 1;
+            const subtotal = Number(rm.subtotal) || (ppnpp * guests * qty * bookingNights);
+            return [rm.roomName || 'Room', qty, guests, fCur(ppnpp), fCur(subtotal)];
+          }),
+          { gold, dark, mid, light, bg }
+        );
+      }
+
+      // ═══════════════════════════ AIRPORT TRANSFER ═══════════════════════════
+      const at = booking.airportTransfer || {};
+      if (at.needed) {
+        ensureSpace(80);
+        y += 5;
+        y = sectionLabel('Airport Transfer', mL, y);
+        if (at.arrivalDate || at.arrivalTime || at.arrivalFlightNumber) {
+          y = field('Arrival', `${fmt(at.arrivalDate)}  ${at.arrivalTime || ''}  Flight: ${at.arrivalFlightNumber || 'N/A'}`, mL, y);
+        }
+        if (at.departureDate || at.departureTime || at.departureFlightNumber) {
+          y = field('Departure', `${fmt(at.departureDate)}  ${at.departureTime || ''}  Flight: ${at.departureFlightNumber || 'N/A'}`, mL, y);
+        }
+        y += 5;
+      }
+
+      // ═══════════════════════════ AMENITIES TABLE ═══════════════════════════
+      const amenities = booking.amenities || [];
+      if (amenities.length > 0) {
+        ensureSpace(50 + amenities.length * 22);
+        y = drawTableSection(doc, 'Selected Amenities', y, mL, cW,
+          ['Amenity', 'Qty', 'Unit Price', 'Total'],
+          [0.45, 0.15, 0.20, 0.20],
+          amenities.map(a => [a.amenityName || 'Amenity', a.quantity ?? 1, fCur(a.pricePerUnit), fCur(a.totalPrice)]),
+          { gold, dark, mid, light, bg }
+        );
+      }
+
+      // ═══════════════════════════ COST SUMMARY ═══════════════════════════
+      ensureSpace(130);
+      y += 5;
+      doc.fill(gold).font('Helvetica-Bold').fontSize(8).text('COST SUMMARY', mL, y);
+      doc.moveTo(mL, y + 12).lineTo(mL + cW, y + 12).strokeColor(gold).lineWidth(0.5).stroke();
+      y += 18;
+
+      const costLine = (lbl, val, bold = false) => {
+        doc.fill(bold ? dark : mid).font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 10 : 9.5);
+        doc.text(lbl, mL, y, { width: cW - 10, align: 'left', continued: false });
+        doc.text(val, mL, y, { width: cW - 10, align: 'right' });
+        y += bold ? 18 : 15;
+      };
+
+      if (costs.basePrice != null)   costLine('Base Price', fCur(costs.basePrice));
+      if (costs.amenitiesTotal > 0)  costLine('Amenities', fCur(costs.amenitiesTotal));
+      if (costs.serviceFee > 0)      costLine('Service Fee (10%)', fCur(costs.serviceFee));
+      if (costs.taxes > 0)           costLine('Taxes (15%)', fCur(costs.taxes));
+
+      // Total bar
+      doc.rect(mL, y, cW, 28).fill(dark);
+      doc.fill(white).font('Helvetica-Bold').fontSize(12).text('TOTAL', mL + 14, y + 7);
+      doc.text(fCur(totalAmt), mL, y + 7, { width: cW - 14, align: 'right' });
+      y += 38;
+
+      // ═══════════════════════════ PAYMENT INFO ═══════════════════════════
+      ensureSpace(80);
+      doc.fill(gold).font('Helvetica-Bold').fontSize(8).text('PAYMENT DETAILS', mL, y);
+      doc.moveTo(mL, y + 12).lineTo(mL + cW, y + 12).strokeColor(gold).lineWidth(0.5).stroke();
+      y += 18;
+
+      const payTerm = booking.paymentTerm || 'deposit';
+      costLine('Payment Term', payTerm === 'full' ? 'Full Payment' : 'Deposit + Balance');
+      costLine('Amount Paid', fCur(amountPaid));
+      // Balance bar
+      const balColor = balance <= 0 ? '#10B981' : '#EF4444';
+      doc.rect(mL, y, cW, 24).fill(balColor);
+      doc.fill(white).font('Helvetica-Bold').fontSize(11).text('BALANCE DUE', mL + 14, y + 6);
+      doc.text(fCur(balance), mL, y + 6, { width: cW - 14, align: 'right' });
+      y += 32;
+
+      const sched = booking.paymentSchedule || {};
+      if (payTerm === 'deposit') {
+        if (sched.depositAmount) costLine('Deposit Amount', fCur(sched.depositAmount));
+        if (sched.balanceAmount) costLine('Balance Amount', fCur(sched.balanceAmount));
+        if (sched.depositDueDate) costLine('Deposit Due', fmt(sched.depositDueDate));
+        if (sched.balanceDueDate) costLine('Balance Due Date', fmt(sched.balanceDueDate));
+      }
+
+      // ═══════════════════════════ FOOTER ═══════════════════════════
+      const footerY = Math.max(y + 20, 760);
+      doc.rect(0, footerY, pw, 50).fill(dark);
+      doc.fill('#999999').font('Helvetica').fontSize(8)
+        .text('The Bush Collection  •  info@thebushcollection.africa  •  +254116072343', 0, footerY + 12, { width: pw, align: 'center' });
+      doc.fill('#666666').fontSize(7)
+        .text(`Generated on ${new Date().toLocaleString()}  •  Thank you for choosing The Bush Collection`, 0, footerY + 26, { width: pw, align: 'center' });
+
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+// ── Table drawing helper for PDFKit ──
+function drawTableSection(doc, title, y, mL, cW, headers, widths, rows, colors) {
+  const { gold, dark, mid, light, bg } = colors;
+
+  // Title
+  doc.fill(gold).font('Helvetica-Bold').fontSize(8).text(title.toUpperCase(), mL, y);
+  doc.moveTo(mL, y + 12).lineTo(mL + cW, y + 12).strokeColor(gold).lineWidth(0.5).stroke();
+  y += 18;
+
+  // Header row
+  doc.rect(mL, y, cW, 20).fill(dark);
+  let xOff = mL + 8;
+  headers.forEach((h, i) => {
+    const w = cW * widths[i];
+    doc.fill('#CCCCCC').font('Helvetica-Bold').fontSize(8).text(h, xOff, y + 5, { width: w - 8 });
+    xOff += w;
+  });
+  y += 20;
+
+  // Data rows
+  rows.forEach((row, ri) => {
+    if (y > 740) { doc.addPage(); y = 40; }
+    if (ri % 2 === 0) doc.rect(mL, y, cW, 20).fill(bg); else doc.rect(mL, y, cW, 20).fill('#FFFFFF');
+    xOff = mL + 8;
+    row.forEach((cell, ci) => {
+      const w = cW * widths[ci];
+      doc.fill(mid).font('Helvetica').fontSize(9).text(String(cell ?? ''), xOff, y + 5, { width: w - 8 });
+      xOff += w;
+    });
+    y += 20;
+  });
+
+  // Bottom border
+  doc.moveTo(mL, y).lineTo(mL + cW, y).strokeColor('#E5E5E5').lineWidth(0.5).stroke();
+  y += 8;
+  return y;
+}
+
+// Helper to send booking notification via Mailchimp service
+const sendBookingNotification = async (bookingInput, type = 'booking_created') => {
+  if (!bookingInput || !bookingInput.customerEmail) return;
+
+  // Ensure property and package are populated for comprehensive PDF
+  let booking = bookingInput;
+  if (booking._id && (!booking.property?.name && !booking.package?.name)) {
+    try {
+      const populated = await Booking.findById(booking._id)
+        .populate('property', 'name location address')
+        .populate('package', 'name duration description');
+      if (populated) booking = populated;
+    } catch (_) { /* use original booking */ }
+  }
+
+  const email = booking.customerEmail;
   const name = (booking.customerName || '').split(' ');
   const merge_fields = {
     FNAME: name[0] || '',
@@ -66,105 +365,38 @@ const sendBookingNotification = async (booking, type = 'booking_created') => {
     console.error('Mailchimp subscribeContactInternal error:', err);
   }
 
-  // 2) Send transactional email with PDF receipt attached (if SMTP configured)
+  // 2) Send transactional receipt email via Mandrill (Mailchimp Transactional)
   try {
-    const transporter = getSmtpTransporter();
-    if (!transporter) {
-      console.warn('SMTP not configured - skipping transactional email');
-      return;
-    }
-
-    // Verify SMTP connection/configuration (logs errors if any)
-    try {
-      await transporter.verify();
-      console.log('SMTP transporter verified');
-    } catch (verifyErr) {
-      console.error('SMTP verify failed:', verifyErr);
-      // continue - sendMail will likely fail but we keep error handling below
-    }
-
-    // Prepare email HTML
     const subject = `Your booking receipt - ${merge_fields.CONFIRMATION || merge_fields.BOOKING_ID}`;
     const html = `<p>Dear ${merge_fields.FNAME || 'Guest'},</p>
-      <p>Thank you for your booking. Please find your receipt attached.</p>
+      <p>Thank you for your booking. Please find your detailed receipt attached as a PDF.</p>
       <ul>
         <li><strong>Booking ID:</strong> ${merge_fields.BOOKING_ID}</li>
         <li><strong>Confirmation:</strong> ${merge_fields.CONFIRMATION}</li>
         <li><strong>Property:</strong> ${merge_fields.PROPERTY}</li>
         <li><strong>Check-in:</strong> ${merge_fields.CHECKIN}</li>
         <li><strong>Check-out:</strong> ${merge_fields.CHECKOUT}</li>
-        <li><strong>Amount:</strong> ${merge_fields.AMOUNT}</li>
+        <li><strong>Total:</strong> $${Number(merge_fields.AMOUNT || 0).toFixed(2)}</li>
       </ul>
       <p>Kind regards,<br/>The Bush Collection</p>`;
 
-    // Generate simple PDF receipt in memory using PDFKit
-    const pdfBuffer = await new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
-        const chunks = [];
-        doc.on('data', (chunk) => chunks.push(chunk));
-        doc.on('end', () => resolve(Buffer.concat(chunks)));
+    // Generate comprehensive PDF receipt
+    const pdfBuffer = await buildReceiptPdf(booking);
+    const pdfBase64 = pdfBuffer.toString('base64');
 
-        // Header
-        doc.fontSize(20).text('The Bush Collection', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(14).text(`Booking Receipt`, { align: 'center' });
-        doc.moveDown();
-
-        // Booking details
-        doc.fontSize(12).text(`Booking ID: ${merge_fields.BOOKING_ID}`);
-        doc.text(`Confirmation: ${merge_fields.CONFIRMATION}`);
-        doc.text(`Customer: ${booking.customerName || ''}`);
-        doc.text(`Email: ${booking.customerEmail || ''}`);
-        doc.moveDown();
-        doc.text(`Property: ${merge_fields.PROPERTY}`);
-        doc.text(`Check-in: ${merge_fields.CHECKIN}`);
-        doc.text(`Check-out: ${merge_fields.CHECKOUT}`);
-        doc.moveDown();
-        doc.text(`Nights: ${booking.nights || ''}`);
-        doc.text(`Guests: ${booking.totalGuests || ''}`);
-        doc.moveDown();
-        doc.fontSize(12).text(`Total: ${merge_fields.AMOUNT}`);
-        doc.moveDown();
-
-        doc.fontSize(10).text('Thank you for booking with The Bush Collection.');
-
-        doc.end();
-      } catch (err) {
-        reject(err);
-      }
-    });
-
-    const mailOptions = {
-      from: process.env.FROM_EMAIL || process.env.SMTP_USER || 'no-reply@thebushcollection.africa',
+    await sendViaMandrill({
       to: email,
+      toName: booking.customerName || '',
       subject,
       html,
-      attachments: [
-        {
-          filename: `Receipt_${merge_fields.CONFIRMATION || merge_fields.BOOKING_ID}.pdf`,
-          content: pdfBuffer,
-          contentType: 'application/pdf'
-        }
-      ]
-    };
-
-    // Ensure we have a valid sender and log mail options for debugging
-    const resolvedFrom = mailOptions.from || process.env.FROM_EMAIL || process.env.SMTP_USER || 'no-reply@thebushcollection.africa';
-    console.log('Sending transactional email - from:', resolvedFrom, 'to:', mailOptions.to);
-    // Explicitly set SMTP envelope to avoid provider showing an empty MAIL FROM
-    const sendOpts = { ...mailOptions, envelope: { from: resolvedFrom, to: Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to] } };
-    console.log('Transactional mail send options (envelope will be used):', { envelope: sendOpts.envelope });
-
-    const info = await transporter.sendMail(sendOpts);
-    console.log('Transactional receipt email sent:', info && info.messageId);
-    // Log provider response for delivery debugging
-    if (info && info.response) console.log('SMTP response:', info.response);
-    if (info && info.envelope) console.log('SMTP envelope:', info.envelope);
-    if (info && info.accepted) console.log('SMTP accepted:', info.accepted);
-    if (info && info.rejected) console.log('SMTP rejected:', info.rejected);
+      attachments: [{
+        type: 'application/pdf',
+        name: `Receipt_${merge_fields.CONFIRMATION || merge_fields.BOOKING_ID}.pdf`,
+        content: pdfBase64,
+      }],
+    });
   } catch (err) {
-    console.error('Error sending transactional email (booking notification):', err);
+    console.error('Error sending receipt email via Mandrill (booking notification):', err);
   }
 };
 
@@ -226,6 +458,29 @@ export const createBooking = async (req, res) => {
     const bookingId = generateBookingId();
     const confirmationNumber = generateConfirmationNumber();
 
+    // Resolve room names from the Room collection if missing
+    let resolvedRooms = rooms || [];
+    if (resolvedRooms.length > 0) {
+      const roomIds = resolvedRooms
+        .filter(r => r.roomId && !r.roomName)
+        .map(r => r.roomId);
+      
+      if (roomIds.length > 0) {
+        try {
+          const roomDocs = await Room.find({ _id: { $in: roomIds } }).select('_id name').lean();
+          const roomNameMap = {};
+          roomDocs.forEach(rd => { roomNameMap[rd._id.toString()] = rd.name; });
+          
+          resolvedRooms = resolvedRooms.map(r => ({
+            ...r,
+            roomName: r.roomName || roomNameMap[r.roomId?.toString()] || undefined
+          }));
+        } catch (lookupErr) {
+          console.warn('Room name lookup failed:', lookupErr.message);
+        }
+      }
+    }
+
     const bookingData = {
       bookingId,
       confirmationNumber,
@@ -243,7 +498,7 @@ export const createBooking = async (req, res) => {
       adults: Number(adults) || 0,
       children: Number(children) || 0,
       specialRequests,
-      rooms: rooms || [],
+      rooms: resolvedRooms,
       airportTransfer: airportTransfer || { needed: false },
       amenities: amenities || [],
       costs: costs || { basePrice: 0, amenitiesTotal: 0, subtotal: 0, serviceFee: 0, taxes: 0, total: 0 },
@@ -255,7 +510,7 @@ export const createBooking = async (req, res) => {
 
     const booking = await Booking.create(bookingData);
 
-      // Fire-and-forget: subscribe/contact update in Mailchimp and trigger automation by adding tags
+      // Fire-and-forget: send notification (booking will be auto-populated inside)
       (async () => {
         try {
           await sendBookingNotification(booking, 'booking_created');
@@ -278,6 +533,40 @@ export const createBooking = async (req, res) => {
   }
 };
 
+// Helper: enrich booking rooms with names from Room collection
+const enrichBookingRoomNames = async (bookings) => {
+  // Collect all roomIds that are missing a roomName
+  const missingIds = new Set();
+  for (const b of bookings) {
+    if (b.rooms && Array.isArray(b.rooms)) {
+      for (const r of b.rooms) {
+        if (r.roomId && !r.roomName) {
+          missingIds.add(r.roomId.toString());
+        }
+      }
+    }
+  }
+  if (missingIds.size === 0) return;
+
+  try {
+    const roomDocs = await Room.find({ _id: { $in: [...missingIds] } }).select('_id name').lean();
+    const nameMap = {};
+    roomDocs.forEach(rd => { nameMap[rd._id.toString()] = rd.name; });
+
+    for (const b of bookings) {
+      if (b.rooms && Array.isArray(b.rooms)) {
+        for (const r of b.rooms) {
+          if (r.roomId && !r.roomName) {
+            r.roomName = nameMap[r.roomId.toString()] || undefined;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('enrichBookingRoomNames failed:', err.message);
+  }
+};
+
 // Admin: list bookings with filters and actions
 export const listBookings = async (req, res) => {
   try {
@@ -290,7 +579,12 @@ export const listBookings = async (req, res) => {
       .populate("package", "name")
       .skip((page-1)*limit)
       .limit(Number(limit))
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Enrich rooms with names from Room collection where roomName is missing
+    await enrichBookingRoomNames(bookings);
+
     const total = await Booking.countDocuments(q);
     res.json({ data: bookings, total });
   } catch (err) {
@@ -306,7 +600,12 @@ export const listUserBookings = async (req, res) => {
     const bookings = await Booking.find({ customerEmail: email })
       .populate('property', 'name')
       .populate('package', 'name')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Enrich rooms with names from Room collection where roomName is missing
+    await enrichBookingRoomNames(bookings);
+
     res.json({ data: bookings });
   } catch (err) {
     res.status(500).json({ msg: err.message });
@@ -317,8 +616,10 @@ export const getBooking = async (req, res) => {
   try {
     const b = await Booking.findById(req.params.id)
       .populate("property", "name location")
-      .populate("package", "name duration");
+      .populate("package", "name duration")
+      .lean();
     if (!b) return res.status(404).json({ msg: "Not found" });
+    await enrichBookingRoomNames([b]);
     res.json(b);
   } catch (err) {
     res.status(500).json({ msg: err.message });
@@ -331,7 +632,8 @@ export const getBookingByRef = async (req, res) => {
     const { bookingId } = req.params;
     const b = await Booking.findOne({ bookingId })
       .populate("property", "name location address")
-      .populate("package", "name duration description");
+      .populate("package", "name duration description")
+      .lean();
     
     if (!b) {
       return res.status(404).json({ 
@@ -347,6 +649,8 @@ export const getBookingByRef = async (req, res) => {
         msg: "Not authorized to view this booking" 
       });
     }
+
+    await enrichBookingRoomNames([b]);
 
     res.json({
       success: true,
@@ -693,7 +997,9 @@ export const generateReceipt = async (req, res) => {
       customerPhone: booking.customerPhone,
       bookingType: booking.bookingType,
       propertyName: booking.property?.name || 'N/A',
+      propertyLocation: booking.property?.location || '',
       packageName: booking.package?.name || 'N/A',
+      packageDuration: booking.package?.duration || '',
       checkInDate: booking.checkInDate,
       checkOutDate: booking.checkOutDate,
       nights: booking.nights,
@@ -701,7 +1007,8 @@ export const generateReceipt = async (req, res) => {
       adults: booking.adults,
       children: booking.children,
       specialRequests: booking.specialRequests || 'None',
-      airportTransfer: booking.airportTransfer?.needed ? 'Yes' : 'No',
+      rooms: booking.rooms || [],
+      airportTransfer: booking.airportTransfer || { needed: false },
       amenities: booking.amenities || [],
       costs: booking.costs,
       paymentTerm: booking.paymentTerm,
@@ -764,68 +1071,48 @@ export const sendReceiptEmail = async (req, res) => {
     const recipient = booking.customerEmail;
     if (!recipient) return res.status(400).json({ success: false, msg: 'Booking has no customer email' });
 
-    // Build receipt content (simple HTML)
+    const confirmRef = booking.confirmationNumber || booking.bookingId;
+    const customerFirst = (booking.customerName || '').split(' ')[0] || 'Guest';
+    const total = Number(booking.costs?.total) || 0;
+    const amountPaid = Number(booking.amountPaid) || 0;
+    const balance = Math.max(total - amountPaid, 0);
+
+    // Brief HTML email body (full details are in the attached PDF)
     const receiptHtml = `
-      <h2>Booking Receipt - ${booking.confirmationNumber || booking.bookingId}</h2>
-      <p><strong>Property:</strong> ${booking.property?.name || 'N/A'}</p>
-      <p><strong>Check-in:</strong> ${booking.checkInDate ? new Date(booking.checkInDate).toDateString() : (booking.checkIn || '')}</p>
-      <p><strong>Check-out:</strong> ${booking.checkOutDate ? new Date(booking.checkOutDate).toDateString() : (booking.checkOut || '')}</p>
-      <p><strong>Nights:</strong> ${booking.nights || 0}</p>
-      <p><strong>Guests:</strong> ${booking.totalGuests || ''}</p>
-      <p><strong>Total:</strong> ${booking.costs?.total || booking.amountPaid || 0}</p>
-      <p>Thank you for booking with The Bush Collection.</p>
+      <p>Dear ${customerFirst},</p>
+      <p>Please find your detailed booking receipt attached as a PDF.</p>
+      <ul>
+        <li><strong>Booking ID:</strong> ${booking.bookingId}</li>
+        <li><strong>Confirmation:</strong> ${confirmRef}</li>
+        <li><strong>Property:</strong> ${booking.property?.name || 'N/A'}</li>
+        <li><strong>Check-in:</strong> ${booking.checkInDate ? new Date(booking.checkInDate).toDateString() : 'N/A'}</li>
+        <li><strong>Check-out:</strong> ${booking.checkOutDate ? new Date(booking.checkOutDate).toDateString() : 'N/A'}</li>
+        <li><strong>Total:</strong> $${total.toFixed(2)}</li>
+        <li><strong>Amount Paid:</strong> $${amountPaid.toFixed(2)}</li>
+        <li><strong>Balance Due:</strong> $${balance.toFixed(2)}</li>
+      </ul>
+      <p>Kind regards,<br/>The Bush Collection</p>
     `;
 
-    // Prepare transporter using SMTP env vars
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const fromEmail = process.env.FROM_EMAIL || process.env.SMTP_USER || 'no-reply@thebushcollection.africa';
+    // Generate comprehensive PDF receipt
+    const pdfBuffer = await buildReceiptPdf(booking);
+    const pdfBase64 = pdfBuffer.toString('base64');
 
-    if (!smtpHost || !smtpPort) {
-      console.error('SMTP not configured');
-      return res.status(500).json({ success: false, msg: 'SMTP not configured on server' });
-    }
-
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465, // true for 465, false for other ports
-      auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
+    // Send via Mandrill (Mailchimp Transactional) with PDF attachment
+    const mandrillResult = await sendViaMandrill({
+      to: recipient,
+      toName: booking.customerName || '',
+      subject: `Your booking receipt - ${confirmRef}`,
+      html: receiptHtml,
+      text: `Booking receipt for ${confirmRef}`,
+      attachments: [{
+        type: 'application/pdf',
+        name: `Receipt_${confirmRef}.pdf`,
+        content: pdfBase64,
+      }],
     });
 
-    // Verify SMTP connection and log it
-    try {
-      await transporter.verify();
-      console.log('SMTP transporter verified for manual receipt');
-    } catch (verifyErr) {
-      console.error('SMTP verify failed (manual receipt):', verifyErr);
-      return res.status(500).json({ success: false, msg: 'SMTP verify failed' });
-    }
-
-    const mailOptions = {
-      from: fromEmail,
-      to: recipient,
-      subject: `Your booking receipt - ${booking.confirmationNumber || booking.bookingId}`,
-      html: receiptHtml,
-      text: `Booking receipt for ${booking.confirmationNumber || booking.bookingId}`
-    };
-
-    // Log and enforce envelope from address
-    const resolvedFromManual = mailOptions.from || fromEmail || process.env.SMTP_USER || 'no-reply@thebushcollection.africa';
-    console.log('Sending manual receipt - from:', resolvedFromManual, 'to:', mailOptions.to);
-    const sendOptsManual = { ...mailOptions, envelope: { from: resolvedFromManual, to: Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to] } };
-    console.log('Manual mail send options (envelope will be used):', { envelope: sendOptsManual.envelope });
-
-    const info = await transporter.sendMail(sendOptsManual);
-    console.log('Receipt email sent:', info && info.messageId);
-    if (info && info.response) console.log('SMTP response:', info.response);
-    if (info && info.envelope) console.log('SMTP envelope:', info.envelope);
-    if (info && info.accepted) console.log('SMTP accepted:', info.accepted);
-    if (info && info.rejected) console.log('SMTP rejected:', info.rejected);
-
-    return res.json({ success: true, message: 'Receipt emailed', info });
+    return res.json({ success: true, message: 'Receipt emailed via Mailchimp', data: mandrillResult });
   } catch (err) {
     console.error('sendReceiptEmail error:', err);
     return res.status(500).json({ success: false, msg: err.message || 'Failed to send receipt' });

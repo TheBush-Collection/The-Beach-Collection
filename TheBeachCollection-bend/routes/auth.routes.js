@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, login, adminLogin, me } from "../controllers/auth.controller.js";
+import { signup, login, adminLogin, me, forgotPassword, resetPassword } from "../controllers/auth.controller.js";
 const router = express.Router();
 
 /**
@@ -134,5 +134,58 @@ router.post("/admin/login", adminLogin);
  *         description: Unauthorized
  */
 router.get("/me", me);
+
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Reset email sent (always returns 200 to prevent email enumeration)
+ */
+router.post("/forgot-password", forgotPassword);
+
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password using token from email
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - password
+ *             properties:
+ *               token:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       400:
+ *         description: Invalid or expired token
+ */
+router.post("/reset-password", resetPassword);
 
 export default router;

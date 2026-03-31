@@ -262,6 +262,75 @@ export const mandrillQuery = async (req, res) => {
   }
 };
 
+/**
+ * Send a transactional email via Mandrill (Mailchimp Transactional) API.
+ * This replaces direct SMTP/nodemailer usage for sending receipt and notification emails.
+ *
+ * @param {Object} options
+ * @param {string} options.to - Recipient email address
+ * @param {string} [options.toName] - Recipient name
+ * @param {string} options.subject - Email subject
+ * @param {string} options.html - Email HTML body
+ * @param {string} [options.text] - Optional plain-text body
+ * @param {Array}  [options.attachments] - Optional array of { name, type, content (base64) }
+ * @returns {Promise<Object>} Mandrill API response data
+ */
+export const sendViaMandrill = async ({ to, toName, subject, html, text, attachments }) => {
+  const MANDRILL_KEY = process.env.MANDRILL_API_KEY || process.env.SMTP_PASS;
+  if (!MANDRILL_KEY) throw new Error('Mandrill API key not configured (set MANDRILL_API_KEY)');
+
+  const fromEmail = process.env.SMTP_FROM || process.env.FROM_EMAIL || process.env.SMTP_USER || 'info@thebushcollection.africa';
+  const fromName = 'The Bush Collection';
+
+  const message = {
+    html,
+    text: text || '',
+    subject,
+    from_email: fromEmail,
+    from_name: fromName,
+    to: [{ email: to, name: toName || '', type: 'to' }],
+    headers: { 'Reply-To': fromEmail },
+    track_opens: true,
+    track_clicks: true,
+  };
+
+  // Attach files if provided (Mandrill expects base64-encoded content)
+  if (attachments && attachments.length > 0) {
+    message.attachments = attachments.map((a) => ({
+      type: a.type || 'application/pdf',
+      name: a.name || 'attachment',
+      content: a.content, // must be base64 string
+    }));
+  }
+
+  console.log('[Mandrill] Sending email to:', to, '| subject:', subject);
+
+  const response = await fetch('https://mandrillapp.com/api/1.0/messages/send.json', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: MANDRILL_KEY, message }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error('[Mandrill] API error:', data);
+    throw new Error(data.message || `Mandrill API error (HTTP ${response.status})`);
+  }
+
+  // Mandrill returns an array; check per-recipient status
+  if (Array.isArray(data) && data.length > 0) {
+    const result = data[0];
+    if (result.status === 'rejected' || result.status === 'invalid') {
+      console.error('[Mandrill] Rejected:', result);
+      throw new Error(`Mandrill rejected email: ${result.reject_reason || result.status}`);
+    }
+    console.log('[Mandrill] Sent successfully:', result._id, '| status:', result.status);
+  }
+
+  return data;
+};
+
 // Internal helper for server-side use (returns response data or throws)
 export const subscribeContactInternal = async ({ email_address, merge_fields = {}, tags = [], status = 'subscribed' }) => {
   if (!email_address) throw new Error('Email address required');
