@@ -86,9 +86,9 @@ export default function Navigation() {
           {/* Logo */}
           <Link to="/" className="flex items-center group">
             <img
-              src=""
+              src="https://res.cloudinary.com/dfaakg2ds/image/upload/v1770802296/WhatsApp_Image_2026-02-11_at_11.32.17_oxyfok.jpg"
               alt="The Beach Collection"
-              className="h-14 w-auto transition-transform group-hover:scale-105"
+              className="h-16 w-auto transition-transform group-hover:scale-105"
             />
           </Link>
 

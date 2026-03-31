@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { toast } from 'sonner';
 
 // Define the correct status types based on your database
-type BookingStatus = 'inquiry' | 'confirmed' | 'deposit-paid' | 'fully-paid' | 'completed' | 'cancelled';
+type BookingStatus = 'pending' | 'confirmed' | 'deposit_paid' | 'fully_paid' | 'completed' | 'cancelled';
 
 interface CalendarBooking {
   id: string;
@@ -25,13 +25,13 @@ interface CalendarBooking {
 
 const getStatusColor = (status: BookingStatus) => {
   switch (status) {
-    case 'inquiry':
+    case 'pending':
       return 'bg-blue-100 text-blue-800 border-blue-200';
     case 'confirmed':
       return 'bg-green-100 text-green-800 border-green-200';
-    case 'deposit-paid':
+    case 'deposit_paid':
       return 'bg-purple-100 text-purple-800 border-purple-200';
-    case 'fully-paid':
+    case 'fully_paid':
       return 'bg-emerald-100 text-emerald-800 border-emerald-200';
     case 'completed':
       return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -160,10 +160,10 @@ export default function AdminCalendar() {
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-gray-600">Filter:</span>
                   <Badge className={getStatusColor(statusFilter)}>
-                    {statusFilter === 'inquiry' && 'Inquiry'}
+                    {statusFilter === 'pending' && 'pending'}
                     {statusFilter === 'confirmed' && 'Confirmed'}
-                    {statusFilter === 'deposit-paid' && 'Deposit Paid'}
-                    {statusFilter === 'fully-paid' && 'Fully Paid'}
+                    {statusFilter === 'deposit_paid' && 'Deposit Paid'}
+                    {statusFilter === 'fully_paid' && 'Fully Paid'}
                     {statusFilter === 'completed' && 'Completed'}
                     {statusFilter === 'cancelled' && 'Cancelled'}
                   </Badge>
@@ -191,9 +191,9 @@ export default function AdminCalendar() {
                   All Bookings
                 </Button>
                 <Button
-                  variant={statusFilter === 'inquiry' ? 'default' : 'outline'}
+                  variant={statusFilter === 'pending' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setStatusFilter('inquiry')}
+                  onClick={() => setStatusFilter('pending')}
                   className="bg-blue-50 border-blue-200 hover:bg-blue-100"
                 >
                   Inquiry
@@ -207,17 +207,17 @@ export default function AdminCalendar() {
                   Confirmed
                 </Button>
                 <Button
-                  variant={statusFilter === 'deposit-paid' ? 'default' : 'outline'}
+                  variant={statusFilter === 'deposit_paid' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setStatusFilter('deposit-paid')}
+                  onClick={() => setStatusFilter('deposit_paid')}
                   className="bg-purple-50 border-purple-200 hover:bg-purple-100"
                 >
                   Deposit Paid
                 </Button>
                 <Button
-                  variant={statusFilter === 'fully-paid' ? 'default' : 'outline'}
+                  variant={statusFilter === 'fully_paid' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setStatusFilter('fully-paid')}
+                  onClick={() => setStatusFilter('fully_paid')}
                   className="bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
                 >
                   Fully Paid

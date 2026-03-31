@@ -79,14 +79,15 @@ const mapBackendToUi = (b: any): SafariBooking => {
     return undefined;
   };
   const statusMap: Record<string, string> = {
-    pending: 'inquiry',
-    deposit_paid: 'deposit-paid',
-    fully_paid: 'fully-paid',
+    pending: 'pending',
+    deposit_paid: 'deposit_paid',
+    fully_paid: 'fully_paid',
     confirmed: 'confirmed',
+    completed: 'completed',
     cancelled: 'cancelled'
   };
 
-  const status = statusMap[b.status] || (b.status ? b.status.replace(/_/g, '-') : b.status);
+  const status = statusMap[b.status] || b.status;
 
   const total = b.costs?.total ?? b.total ?? 0;
   const amountPaid = b.amountPaid ?? b.deposit_paid ?? 0;
@@ -295,8 +296,8 @@ export const useBackendBookings = () => {
     // Check for status changes and call appropriate endpoints
     if (updates.status) {
       const status = updates.status;
-      if (status === 'deposit-paid' || status === 'deposit_paid') return setDepositPaid(id);
-      if (status === 'fully-paid' || status === 'fully_paid') return setFullyPaid(id);
+      if (status === 'deposit_paid' || status === 'deposit-paid') return setDepositPaid(id);
+      if (status === 'fully_paid' || status === 'fully-paid') return setFullyPaid(id);
       if (status === 'confirmed') return setConfirmed(id);
       if (status === 'completed') {
         // Admin check-in / completed action
@@ -305,7 +306,7 @@ export const useBackendBookings = () => {
         return res.data;
       }
       if (status === 'cancelled') return cancelBooking(id);
-      if (status === 'inquiry' || status === 'pending') return reopenBooking(id);
+      if (status === 'pending' || status === 'inquiry') return reopenBooking(id);
     }
 
     // If there are other updates not covered by admin endpoints, attempt to PATCH the booking (if backend supports it)

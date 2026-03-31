@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -137,9 +137,9 @@ export default function AdminAnalytics() {
     data.totalBookings = currentBookings.length;
     data.totalRevenue = currentBookings.reduce((sum, booking) => {
       // Only include revenue from paid bookings (including completed ones that were previously paid)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         return sum + (booking.deposit_paid || 0);
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         return sum + (booking.total_amount || 0);
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid
@@ -168,9 +168,9 @@ export default function AdminAnalytics() {
 
     const previousRevenue = previousBookings.reduce((sum, booking) => {
       // Only include revenue from paid bookings (including completed ones that were previously paid)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         return sum + (booking.deposit_paid || 0);
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         return sum + (booking.total_amount || 0);
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid
@@ -194,9 +194,9 @@ export default function AdminAnalytics() {
         dailyRevenue[date] = 0;
       }
       // Calculate actual revenue (only paid amounts)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         dailyRevenue[date] += booking.deposit_paid || 0;
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         dailyRevenue[date] += booking.total_amount || 0;
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid
@@ -228,9 +228,9 @@ export default function AdminAnalytics() {
       
       propertyStats[propertyName].bookings += 1;
       // Calculate actual revenue (only paid amounts)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         propertyStats[propertyName].revenue += booking.deposit_paid || 0;
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         propertyStats[propertyName].revenue += booking.total_amount || 0;
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid
@@ -293,9 +293,9 @@ export default function AdminAnalytics() {
       packageStats[packageId].bookings += 1;
       // Calculate actual revenue (only paid amounts)
       let amount = 0;
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         amount = booking.deposit_paid || 0;
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         amount = booking.total_amount || 0;
       } else if (booking.status === 'completed') {
         amount = booking.deposit_paid && booking.deposit_paid > 0 ? booking.deposit_paid : (booking.total_amount || 0);
@@ -378,8 +378,8 @@ export default function AdminAnalytics() {
     currentYearBookings.forEach(booking => {
       const date = new Date(booking.created_at || booking.check_in);
       const month = date.getMonth();
-      const amount = booking.status === 'deposit-paid' ? (booking.deposit_paid || 0) :
-                   booking.status === 'fully-paid' || booking.status === 'completed' ? 
+      const amount = booking.status === 'deposit_paid' ? (booking.deposit_paid || 0) :
+                   booking.status === 'fully_paid' || booking.status === 'completed' ? 
                    (booking.total_amount || 0) : 0;
       months[month].income += amount;
     });
@@ -388,8 +388,8 @@ export default function AdminAnalytics() {
     previousYearBookings.forEach(booking => {
       const date = new Date(booking.created_at || booking.check_in);
       const month = date.getMonth();
-      const amount = booking.status === 'deposit-paid' ? (booking.deposit_paid || 0) :
-                   booking.status === 'fully-paid' || booking.status === 'completed' ? 
+      const amount = booking.status === 'deposit_paid' ? (booking.deposit_paid || 0) :
+                   booking.status === 'fully_paid' || booking.status === 'completed' ? 
                    (booking.total_amount || 0) : 0;
       months[month].previousYear += amount;
     });
@@ -412,8 +412,8 @@ export default function AdminAnalytics() {
       const yearIndex = years.findIndex(y => y.year === year);
       
       if (yearIndex !== -1) {
-        const amount = booking.status === 'deposit-paid' ? (booking.deposit_paid || 0) :
-                     booking.status === 'fully-paid' || booking.status === 'completed' ? 
+        const amount = booking.status === 'deposit_paid' ? (booking.deposit_paid || 0) :
+                     booking.status === 'fully_paid' || booking.status === 'completed' ? 
                      (booking.total_amount || 0) : 0;
         years[yearIndex].income += amount;
       }
@@ -461,10 +461,10 @@ export default function AdminAnalytics() {
   // Show loading state
   if (bookingsLoading || propertiesLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-64 bg-[#F4F7FB]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading analytics data...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#749DD0] mx-auto mb-4"></div>
+          <p className="text-[#92AAD1] font-medium">Loading analytics data...</p>
         </div>
       </div>
     );
@@ -473,316 +473,453 @@ export default function AdminAnalytics() {
   // Show error state
   if (bookingsError || propertiesError) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-64 bg-[#F4F7FB]">
         <div className="text-center">
-          <p className="text-red-600 mb-2">Error loading analytics data</p>
-          <p className="text-gray-600 text-sm">{bookingsError || propertiesError}</p>
+          <p className="text-rose-500 mb-2 font-semibold">Error loading analytics data</p>
+          <p className="text-[#92AAD1] text-sm">{bookingsError || propertiesError}</p>
         </div>
       </div>
     );
   }
 
+  // Brand palette: #749DD0 ocean · #48547C navy · #92AAD1 mist · #CFE7F8 sky · #33343B charcoal · #F7F9FC page
+  const BRAND_COLORS = ['#749DD0', '#48547C', '#B8D4EE', '#0D9488', '#F59E0B', '#F43F5E'];
+
+  const sortedProperties = sortTable(analytics.propertyPerformance, propertySort.key, propertySort.direction);
+  const sortedPackages   = sortTable(analytics.packagePerformance,  packageSort.key,  packageSort.direction);
+
+  const kpis = [
+    {
+      label: 'Total Bookings',
+      value: (analytics.totalBookings || 0).toLocaleString(),
+      growth: analytics.bookingGrowth || 0,
+      icon: Calendar,
+      accent: '#749DD0',
+      accentLight: '#EEF4FB',
+      sub: (analytics.bookingStatus?.find(s => s.status.toLowerCase().includes('confirm'))?.count ?? 0) + ' confirmed',
+    },
+    {
+      label: 'Total Revenue',
+      value: 'KES ' + (analytics.totalRevenue || 0).toLocaleString(),
+      growth: analytics.revenueGrowth || 0,
+      icon: DollarSign,
+      accent: '#0D9488',
+      accentLight: '#F0FDFA',
+      sub: 'from paid bookings',
+    },
+    {
+      label: 'Total Guests',
+      value: (analytics.totalGuests || 0).toLocaleString(),
+      growth: 0,
+      icon: Users,
+      accent: '#48547C',
+      accentLight: '#EEF0F6',
+      sub: ((analytics.totalGuests || 0) / Math.max(analytics.totalBookings || 1, 1)).toFixed(1) + ' avg per booking',
+    },
+    {
+      label: 'Avg Booking Value',
+      value: 'KES ' + Math.round(analytics.averageBookingValue || 0).toLocaleString(),
+      growth: 0,
+      icon: TrendingUp,
+      accent: '#F59E0B',
+      accentLight: '#FFFBEB',
+      sub: 'per reservation',
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-          <p className="text-gray-600">Comprehensive business insights from Supabase</p>
+    <div className="min-h-screen bg-[#F7F9FC]" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+
+      {/* ── HEADER BAR ──────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-[#E8EDF5] px-8 py-5">
+        <div className="max-w-[1440px] mx-auto flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1 h-5 rounded-full" style={{ background: 'linear-gradient(180deg,#749DD0,#48547C)' }} />
+              <span className="text-xs font-semibold text-[#92AAD1] tracking-widest uppercase">
+                Analytics
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold text-[#33343B] leading-tight">
+              Business Intelligence
+            </h1>
+            <p className="text-sm text-[#92AAD1] mt-0.5">
+              The Beach Collection &nbsp;&middot;&nbsp; {timeRange === '7' ? 'Last 7 days' : timeRange === '30' ? 'Last 30 days' : timeRange === '90' ? 'Last 90 days' : 'Last 12 months'}
+            </p>
+          </div>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-40 h-9 text-sm border-[#E8EDF5] bg-white text-[#33343B] rounded-lg shadow-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="text-sm border-[#E8EDF5] shadow-lg rounded-xl">
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="365">Last 12 months</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="365">Last year</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalBookings || 0}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {getGrowthIcon(analytics.bookingGrowth || 0)}
-              <span className={`ml-1 ${getGrowthColor(analytics.bookingGrowth || 0)}`}>
-                {Math.abs(analytics.bookingGrowth || 0).toFixed(1)}% from last period
-              </span>
+      <div className="max-w-[1440px] mx-auto px-8 py-8 space-y-7">
+
+        {/* ── KPI ROW ──────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
+          {kpis.map((k) => {
+            const Icon = k.icon;
+            const up = k.growth >= 0;
+            return (
+              <div
+                key={k.label}
+                className="bg-white rounded-2xl p-6 border border-[#E8EDF5] hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-5">
+                  <span className="text-xs font-semibold text-[#92AAD1] tracking-wider uppercase">
+                    {k.label}
+                  </span>
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: k.accentLight, color: k.accent }}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-[26px] font-bold text-[#33343B] leading-none mb-2">
+                  {k.value}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#B0BCCF]">{k.sub}</span>
+                  {k.growth !== 0 && (
+                    <span
+                      className="flex items-center gap-0.5 text-xs font-semibold"
+                      style={{ color: up ? '#0D9488' : '#F43F5E' }}
+                    >
+                      {up ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                      {Math.abs(k.growth).toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── CHARTS ───────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
+          {/* Revenue Trend — wider */}
+          <div className="lg:col-span-3 bg-white rounded-2xl border border-[#E8EDF5] overflow-hidden hover:shadow-md transition-shadow">
+            <div className="px-6 py-4 border-b border-[#F0F4FA] flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[#33343B]">Revenue Trend</p>
+                <p className="text-xs text-[#B0BCCF] mt-0.5">Daily revenue from paid bookings</p>
+              </div>
+              <TrendingUp className="w-4 h-4 text-[#749DD0]" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(analytics.totalRevenue || 0)}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {getGrowthIcon(analytics.revenueGrowth || 0)}
-              <span className={`ml-1 ${getGrowthColor(analytics.revenueGrowth || 0)}`}>
-                {Math.abs(analytics.revenueGrowth || 0).toFixed(1)}% from last period
-              </span>
+            <div className="px-4 py-4">
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={analytics.revenueTrends || []} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#749DD0" stopOpacity={0.18} />
+                      <stop offset="100%" stopColor="#749DD0" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} stroke="#F0F4FA" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#B0BCCF' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#B0BCCF' }} axisLine={false} tickLine={false} width={60} />
+                  <Tooltip
+                    contentStyle={{ background: '#fff', border: '1px solid #E8EDF5', borderRadius: 10, fontSize: 12, color: '#33343B', boxShadow: '0 4px 16px rgba(72,84,124,0.1)' }}
+                    formatter={(v) => ['KES ' + Number(v).toLocaleString(), 'Revenue']}
+                  />
+                  <Area type="monotone" dataKey="revenue" stroke="#749DD0" strokeWidth={2.5} fill="url(#revGrad)" dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Revenue received from payments
-            </p>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Guests</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalGuests || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Avg {((analytics.totalGuests || 0) / Math.max(analytics.totalBookings || 1, 1)).toFixed(1)} per booking
-            </p>
-          </CardContent>
-        </Card>
+          {/* Booking Status — narrower */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E8EDF5] overflow-hidden hover:shadow-md transition-shadow">
+            <div className="px-6 py-4 border-b border-[#F0F4FA] flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[#33343B]">Booking Status</p>
+                <p className="text-xs text-[#B0BCCF] mt-0.5">Distribution by status</p>
+              </div>
+              <Calendar className="w-4 h-4 text-[#749DD0]" />
+            </div>
+            <div className="flex flex-col items-center pt-4 pb-5 px-5">
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie
+                    data={analytics.bookingStatus || []}
+                    cx="50%" cy="50%"
+                    innerRadius={52} outerRadius={78}
+                    paddingAngle={2}
+                    dataKey="count"
+                  >
+                    {(analytics.bookingStatus || []).map((_, i) => (
+                      <Cell key={i} fill={BRAND_COLORS[i % BRAND_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: '#fff', border: '1px solid #E8EDF5', borderRadius: 10, fontSize: 12, color: '#33343B' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="w-full space-y-1.5 mt-1">
+                {(analytics.bookingStatus || []).map((s, i) => (
+                  <div key={s.status} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: BRAND_COLORS[i % BRAND_COLORS.length] }} />
+                      <span className="text-[#92AAD1]">{s.status}</span>
+                    </div>
+                    <span className="font-semibold text-[#33343B]">{s.count} <span className="font-normal text-[#B0BCCF]">({s.percentage}%)</span></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Booking Value</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(analytics.averageBookingValue || 0)}</div>
-            <p className="text-xs text-muted-foreground">
-              Per booking average
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* ── GUEST SIZE BAR + QUICK STATS ─────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Trends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={analytics.revenueTrends || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip formatter={(value) => [formatCurrency(value as number), 'Revenue']} />
-                <Area type="monotone" dataKey="revenue" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          {/* Guest Group Sizes */}
+          <div className="lg:col-span-3 bg-white rounded-2xl border border-[#E8EDF5] overflow-hidden hover:shadow-md transition-shadow">
+            <div className="px-6 py-4 border-b border-[#F0F4FA] flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[#33343B]">Guest Group Sizes</p>
+                <p className="text-xs text-[#B0BCCF] mt-0.5">Number of bookings by party size</p>
+              </div>
+              <Users className="w-4 h-4 text-[#749DD0]" />
+            </div>
+            <div className="px-4 py-4">
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={analytics.guestDemographics || []} barSize={40} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="#F0F4FA" />
+                  <XAxis dataKey="category" tick={{ fontSize: 10, fill: '#B0BCCF' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#B0BCCF' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: '#fff', border: '1px solid #E8EDF5', borderRadius: 10, fontSize: 12, color: '#33343B' }}
+                  />
+                  <Bar dataKey="count" radius={[5, 5, 0, 0]}>
+                    {(analytics.guestDemographics || []).map((_, i) => (
+                      <Cell key={i} fill={BRAND_COLORS[i % BRAND_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
-        {/* Booking Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Booking Status Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={analytics.bookingStatus || []}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ status, percentage }) => `${status} (${percentage}%)`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {(analytics.bookingStatus || []).map((entry, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          {/* Quick Stats */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E8EDF5] overflow-hidden hover:shadow-md transition-shadow">
+            <div className="px-6 py-4 border-b border-[#F0F4FA] flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[#33343B]">Key Metrics</p>
+                <p className="text-xs text-[#B0BCCF] mt-0.5">Summary for selected period</p>
+              </div>
+              <Star className="w-4 h-4 text-[#749DD0]" />
+            </div>
+            <div className="divide-y divide-[#F0F4FA]">
+              {[
+                {
+                  label: 'Properties with Bookings',
+                  value: (analytics.propertyPerformance?.length || 0).toString(),
+                },
+                {
+                  label: 'Avg Group Size',
+                  value: ((analytics.totalGuests || 0) / Math.max(analytics.totalBookings || 1, 1)).toFixed(1) + ' guests',
+                },
+                {
+                  label: 'Revenue per Guest',
+                  value: 'KES ' + Math.round((analytics.totalRevenue || 0) / Math.max(analytics.totalGuests || 1, 1)).toLocaleString(),
+                },
+                {
+                  label: 'Top Property',
+                  value: analytics.propertyPerformance?.[0]?.property?.substring(0, 22) || '—',
+                },
+                {
+                  label: 'Booking Conversion',
+                  value: (analytics.bookingStatus?.find(s => s.status.toLowerCase().includes('confirm'))?.percentage ?? 0) + '%',
+                },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex items-center justify-between px-6 py-3.5">
+                  <span className="text-xs text-[#92AAD1]">{label}</span>
+                  <span
+                    className="text-xs font-bold text-[#48547C] px-2.5 py-1 rounded-lg"
+                    style={{ background: '#EEF4FB' }}
+                  >
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── PROPERTY PERFORMANCE TABLE ────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-[#E8EDF5] overflow-hidden hover:shadow-md transition-shadow">
+          <div className="px-6 py-4 border-b border-[#F0F4FA] flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#33343B]">Property Performance</p>
+              <p className="text-xs text-[#B0BCCF] mt-0.5">Click any column header to sort</p>
+            </div>
+            <MapPin className="w-4 h-4 text-[#749DD0]" />
+          </div>
+          {sortedProperties.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#F7F9FC]">
+                    {[
+                      { key: 'property',            label: 'Property',    align: 'left'  },
+                      { key: 'bookings',             label: 'Bookings',    align: 'right' },
+                      { key: 'revenue',              label: 'Revenue',     align: 'right' },
+                      { key: 'guests',               label: 'Guests',      align: 'right' },
+                      { key: 'averageBookingValue',  label: 'Avg Value',   align: 'right' },
+                      { key: 'averageRating',        label: 'Rating',      align: 'right' },
+                    ].map(col => (
+                      <th
+                        key={col.key}
+                        className={'px-6 py-3 text-xs font-semibold text-[#92AAD1] tracking-wider uppercase cursor-pointer select-none hover:text-[#749DD0] transition-colors ' + (col.align === 'right' ? 'text-right' : 'text-left')}
+                        onClick={() => setPropertySort({
+                          key: col.key,
+                          direction: propertySort.key === col.key && propertySort.direction === 'desc' ? 'asc' : 'desc',
+                        })}
+                      >
+                        {col.label}
+                        {propertySort.key === col.key && (
+                          <span className="ml-1 text-[#749DD0]">{propertySort.direction === 'desc' ? ' ↓' : ' ↑'}</span>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F0F4FA]">
+                  {sortedProperties.map((p, i) => (
+                    <tr key={i} className="hover:bg-[#F7F9FC] transition-colors">
+                      <td className="px-6 py-4 text-sm font-medium text-[#33343B]">{p.property}</td>
+                      <td className="px-6 py-4 text-sm text-right text-[#92AAD1]">{p.bookings}</td>
+                      <td className="px-6 py-4 text-sm text-right font-semibold text-[#749DD0]">KES {p.revenue.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-right text-[#92AAD1]">{p.guests}</td>
+                      <td className="px-6 py-4 text-sm text-right text-[#92AAD1]">KES {Math.round(p.averageBookingValue).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          {p.averageRating > 0 ? p.averageRating.toFixed(1) : '—'}
+                        </span>
+                      </td>
+                    </tr>
                   ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Property Performance Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Property Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {analytics.propertyPerformance && analytics.propertyPerformance.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2 cursor-pointer" onClick={() => setPropertySort({ key: 'property', direction: propertySort.direction === 'asc' ? 'desc' : 'asc' })}>Property</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPropertySort({ key: 'bookings', direction: propertySort.direction === 'asc' ? 'desc' : 'asc' })}>Bookings</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPropertySort({ key: 'revenue', direction: propertySort.direction === 'asc' ? 'desc' : 'asc' })}>Revenue</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPropertySort({ key: 'guests', direction: propertySort.direction === 'asc' ? 'desc' : 'asc' })}>Guests</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPropertySort({ key: 'averageBookingValue', direction: propertySort.direction === 'asc' ? 'desc' : 'asc' })}>Avg Booking</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPropertySort({ key: 'averageRating', direction: propertySort.direction === 'asc' ? 'desc' : 'asc' })}>Rating</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortTable(analytics.propertyPerformance, propertySort.key, propertySort.direction).map((property, index: number) => (
-                      <tr key={index} className="border-b">
-                        <td className="p-2 font-medium">{property.property}</td>
-                        <td className="p-2 text-right">{property.bookings}</td>
-                        <td className="p-2 text-right font-semibold">{formatCurrency(property.revenue)}</td>
-                        <td className="p-2 text-right">{property.guests}</td>
-                        <td className="p-2 text-right">{formatCurrency(property.averageBookingValue)}</td>
-                        <td className="p-2 text-right">
-                          <div className="flex items-center justify-end">
-                            <Star className="h-3 w-3 text-yellow-500 mr-1" />
-                            {property.averageRating.toFixed(1)}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No property data available for the selected time period
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Guest Demographics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Guest Group Sizes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analytics.guestDemographics || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Stats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Properties with Bookings</span>
-                <Badge variant="outline">
-                  {analytics.propertyPerformance?.length || 0}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Average Group Size</span>
-                <Badge variant="outline">
-                  {((analytics.totalGuests || 0) / Math.max(analytics.totalBookings || 1, 1)).toFixed(1)} guests
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Revenue per Guest</span>
-                <Badge variant="outline">
-                  {formatCurrency((analytics.totalRevenue || 0) / Math.max(analytics.totalGuests || 1, 1))}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Top Performing Property</span>
-                <Badge variant="outline">
-                  {analytics.propertyPerformance?.[0]?.property?.substring(0, 20) || 'N/A'}
-                </Badge>
-              </div>
+                </tbody>
+              </table>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-14 text-[#C5D0E0]">
+              <MapPin className="w-8 h-8 mb-3" />
+              <p className="text-sm font-medium">No property data for this period</p>
+            </div>
+          )}
+        </div>
 
-      {/* Package Performance Table & Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Package Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {analytics.packagePerformance && analytics.packagePerformance.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2 cursor-pointer" onClick={() => setPackageSort({ key: 'packageName', direction: packageSort.direction === 'asc' ? 'desc' : 'asc' })}>Package</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPackageSort({ key: 'bookings', direction: packageSort.direction === 'asc' ? 'desc' : 'asc' })}>Bookings</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPackageSort({ key: 'revenue', direction: packageSort.direction === 'asc' ? 'desc' : 'asc' })}>Revenue</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPackageSort({ key: 'guests', direction: packageSort.direction === 'asc' ? 'desc' : 'asc' })}>Guests</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPackageSort({ key: 'averageBookingValue', direction: packageSort.direction === 'asc' ? 'desc' : 'asc' })}>Avg Booking</th>
-                      <th className="text-right p-2 cursor-pointer" onClick={() => setPackageSort({ key: 'averageRating', direction: packageSort.direction === 'asc' ? 'desc' : 'asc' })}>Rating</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortTable(analytics.packagePerformance, packageSort.key, packageSort.direction).map((pkg, index: number) => (
-                      <tr key={index} className="border-b">
-                        <td className="p-2 font-medium">{pkg.packageName}</td>
-                        <td className="p-2 text-right">{pkg.bookings}</td>
-                        <td className="p-2 text-right font-semibold">{formatCurrency(pkg.revenue)}</td>
-                        <td className="p-2 text-right">{pkg.guests}</td>
-                        <td className="p-2 text-right">{formatCurrency(pkg.averageBookingValue)}</td>
-                        <td className="p-2 text-right">
-                          <div className="flex items-center justify-end">
-                            <Star className="h-3 w-3 text-yellow-500 mr-1" />
-                            {pkg.averageRating.toFixed(1)}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No package data available for the selected time period
-              </div>
-            )}
+        {/* ── PACKAGE PERFORMANCE TABLE ─────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-[#E8EDF5] overflow-hidden hover:shadow-md transition-shadow">
+          <div className="px-6 py-4 border-b border-[#F0F4FA] flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#33343B]">Package Performance</p>
+              <p className="text-xs text-[#B0BCCF] mt-0.5">Click any column header to sort</p>
+            </div>
+            <TrendingUp className="w-4 h-4 text-[#749DD0]" />
           </div>
-        </CardContent>
-      </Card>
+          {sortedPackages.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#F7F9FC]">
+                    {[
+                      { key: 'packageName',         label: 'Package',   align: 'left'  },
+                      { key: 'bookings',             label: 'Bookings',  align: 'right' },
+                      { key: 'revenue',              label: 'Revenue',   align: 'right' },
+                      { key: 'guests',               label: 'Guests',    align: 'right' },
+                      { key: 'averageBookingValue',  label: 'Avg Value', align: 'right' },
+                      { key: 'averageRating',        label: 'Rating',    align: 'right' },
+                    ].map(col => (
+                      <th
+                        key={col.key}
+                        className={'px-6 py-3 text-xs font-semibold text-[#92AAD1] tracking-wider uppercase cursor-pointer select-none hover:text-[#749DD0] transition-colors ' + (col.align === 'right' ? 'text-right' : 'text-left')}
+                        onClick={() => setPackageSort({
+                          key: col.key,
+                          direction: packageSort.key === col.key && packageSort.direction === 'desc' ? 'asc' : 'desc',
+                        })}
+                      >
+                        {col.label}
+                        {packageSort.key === col.key && (
+                          <span className="ml-1 text-[#749DD0]">{packageSort.direction === 'desc' ? ' ↓' : ' ↑'}</span>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F0F4FA]">
+                  {sortedPackages.map((pkg, i) => (
+                    <tr key={i} className="hover:bg-[#F7F9FC] transition-colors">
+                      <td className="px-6 py-4 text-sm font-medium text-[#33343B]">{pkg.packageName}</td>
+                      <td className="px-6 py-4 text-sm text-right text-[#92AAD1]">{pkg.bookings}</td>
+                      <td className="px-6 py-4 text-sm text-right font-semibold text-[#749DD0]">KES {pkg.revenue.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-right text-[#92AAD1]">{pkg.guests}</td>
+                      <td className="px-6 py-4 text-sm text-right text-[#92AAD1]">KES {Math.round(pkg.averageBookingValue).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          {pkg.averageRating > 0 ? pkg.averageRating.toFixed(1) : '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-14 text-[#C5D0E0]">
+              <TrendingUp className="w-8 h-8 mb-3" />
+              <p className="text-sm font-medium">No package data for this period</p>
+            </div>
+          )}
+        </div>
 
-      {/* Package Revenue Comparison Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Package Revenue Comparison</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={analytics.packagePerformance || []}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="packageName" />
-              <YAxis />
-              <Tooltip formatter={(value) => [formatCurrency(value as number), 'Revenue']} />
-              <Bar dataKey="revenue" fill="#0088FE" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        {/* ── PACKAGE REVENUE CHART ────────────────────────────────────── */}
+        {(analytics.packagePerformance?.length ?? 0) > 0 && (
+          <div className="bg-white rounded-2xl border border-[#E8EDF5] overflow-hidden hover:shadow-md transition-shadow">
+            <div className="px-6 py-4 border-b border-[#F0F4FA] flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[#33343B]">Package Revenue Comparison</p>
+                <p className="text-xs text-[#B0BCCF] mt-0.5">Revenue generated per package</p>
+              </div>
+              <TrendingUp className="w-4 h-4 text-[#749DD0]" />
+            </div>
+            <div className="px-4 py-5">
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={analytics.packagePerformance} barSize={44} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="#F0F4FA" />
+                  <XAxis dataKey="packageName" tick={{ fontSize: 10, fill: '#B0BCCF' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#B0BCCF' }} axisLine={false} tickLine={false} width={70} />
+                  <Tooltip
+                    contentStyle={{ background: '#fff', border: '1px solid #E8EDF5', borderRadius: 10, fontSize: 12, color: '#33343B', boxShadow: '0 4px 16px rgba(72,84,124,0.1)' }}
+                    formatter={(v) => ['KES ' + Number(v).toLocaleString(), 'Revenue']}
+                  />
+                  <Bar dataKey="revenue" radius={[5, 5, 0, 0]}>
+                    {(analytics.packagePerformance || []).map((_, i) => (
+                      <Cell key={i} fill={BRAND_COLORS[i % BRAND_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }

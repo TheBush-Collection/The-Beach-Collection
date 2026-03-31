@@ -298,27 +298,27 @@ export default function About() {
   const team = [
     {
       name: 'Andre Du Plessis',
-      role: 'Founder & CEO',
-      image: 'https://westus31-mediap.svc.ms/transform/thumbnail?provider=spo&farmid=194147&inputFormat=jpeg&cs=fFNQTw&docid=https%3A%2F%2Fmy.microsoftpersonalcontent.com%2F_api%2Fv2.0%2Fdrives%2Fb!UHvAJHRZv0uHtY6cWKy5LhPq4UG_8gRHvcdyi-WzL1rWc8fM8bbUQaApuV5hXGy_%2Fitems%2F01GBRSVX6E3BPKML4XKBCKVKAYJSIMVK2V%3Ftempauth%3Dv1e.eyJzaXRlaWQiOiIyNGMwN2I1MC01OTc0LTRiYmYtODdiNS04ZTljNThhY2I5MmUiLCJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvbXkubWljcm9zb2Z0cGVyc29uYWxjb250ZW50LmNvbUA5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQiLCJleHAiOiIxNzY4MzA1NjAwIn0.B_dTR2Xl9MsMGk4SjyraLmtng55917bKu43amr2QBN-iPGxox4vUHi1xkfxgy85cPl58bRkj-xuG3P8g2tp97RHD6vhhJbDbQ2dRt9_AwujqMIhaFd3PGvG0mXaZCO8GCsiJ_qyznHaZXpVS95vltH7o7WCnObH0dw3XpxgEeoa49GCQhZ9THVlA8z2ybrG-5iYHZ07yRtJlQ2_ZtRfymNpGXmyO2BCrnHxXU8m2Qs5a99x3uSDnp3ZCxEFBfHW-igBMmREZzQ4frDlSm5y3FRm5iGXaBpnaUmBUqcFUXPK9O8MELq5041qhJfEFbp0HSSLijp84WbDh5hBzM_rAU8ynhahWk0sMvj1lkLmN2ge-3KHCSVHf81T4t8e_xg2q88dL-NEKD60Fcjb7dEqucG3hYxBIB2e1pfSqf-Wjen51qtk0U0A9_r-Q1DXnga44678QP97LIVAH7b1ttmqi__iu3jzUN2-gDxT_dNeYPA5ANU7O-fGopQXc3Gyus-7W.hLrn1URfkgQOLej6T7p-qrgKQCHVOHmX2n-P48patkA%26version%3DPublished&cb=63903813516&encodeFailures=1&width=503&height=755',
-      bio: 'Hospitality visionary with 20+ years of experience in luxury coastal properties'
+      role: 'Founder & Proud Owner',
+      image: 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1772024009/Andre_Pic_wyfgwy.png',
+      bio: 'Safari enthusiast with 40+ years of African travel experience'
+    },
+    {
+      name: 'Paul Muchiri,  MBA, CPA',
+      role: 'General Manager',
+      image: 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1772015030/Paul_jguahv.png',
+      bio: 'An experienced hospitality leader with a strong background in finance and operations, Paul provides strategic leadership at The Bush Collection, ensuring exceptional service standards and sustainable growth across the properties.'
     },
     {
       name: 'James Mwangi',
       role: 'Head of IT',
-      image: 'https://westus31-mediap.svc.ms/transform/thumbnail?provider=spo&farmid=194147&inputFormat=jpeg&cs=fFNQTw&docid=https%3A%2F%2Fmy.microsoftpersonalcontent.com%2F_api%2Fv2.0%2Fdrives%2Fb!UHvAJHRZv0uHtY6cWKy5LhPq4UG_8gRHvcdyi-WzL1rWc8fM8bbUQaApuV5hXGy_%2Fitems%2F01GBRSVX6E3BPKML4XKBCKVKAYJSIMVK2V%3Ftempauth%3Dv1e.eyJzaXRlaWQiOiIyNGMwN2I1MC01OTc0LTRiYmYtODdiNS04ZTljNThhY2I5MmUiLCJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvbXkubWljcm9zb2Z0cGVyc29uYWxjb250ZW50LmNvbUA5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQiLCJleHAiOiIxNzY4MzA1NjAwIn0.B_dTR2Xl9MsMGk4SjyraLmtng55917bKu43amr2QBN-iPGxox4vUHi1xkfxgy85cPl58bRkj-xuG3P8g2tp97RHD6vhhJbDbQ2dRt9_AwujqMIhaFd3PGvG0mXaZCO8GCsiJ_qyznHaZXpVS95vltH7o7WCnObH0dw3XpxgEeoa49GCQhZ9THVlA8z2ybrG-5iYHZ07yRtJlQ2_ZtRfymNpGXmyO2BCrnHxXU8m2Qs5a99x3uSDnp3ZCxEFBfHW-igBMmREZzQ4frDlSm5y3FRm5iGXaBpnaUmBUqcFUXPK9O8MELq5041qhJfEFbp0HSSLijp84WbDh5hBzM_rAU8ynhahWk0sMvj1lkLmN2ge-3KHCSVHf81T4t8e_xg2q88dL-NEKD60Fcjb7dEqucG3hYxBIB2e1pfSqf-Wjen51qtk0U0A9_r-Q1DXnga44678QP97LIVAH7b1ttmqi__iu3jzUN2-gDxT_dNeYPA5ANU7O-fGopQXc3Gyus-7W.hLrn1URfkgQOLej6T7p-qrgKQCHVOHmX2n-P48patkA%26version%3DPublished&cb=63903813516&encodeFailures=1&width=503&height=755',
-      bio: 'Expert in hospitality technology and digital guest experiences'
+      image: 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1769681709/James_wfhj6t.jpg',
+      bio: 'Designs personalized itineraries and ensures every guest receives attentive, tailored service from inquiry to return.'
     },
     {
       name: 'Linda Otieno',
       role: 'Head of Reservations & Sales',
-      image: 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1769681709/Linda_sgvaok.jpg',
+      image: 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1771577013/linda2_k2ipao.jpg',
       bio: 'A passionate hotelier dedicated to creating memorable guest experiences while driving sales growth and operational excellence.'
-    },
-    {
-      name: 'Paul Muchiri',
-      role: 'General Manager',
-      image: '',
-      bio: 'Born in Kenya, passionate about sharing African culture'
     },
     {
       name: 'Molly Obondi',
@@ -326,17 +326,18 @@ export default function About() {
       image: 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1769681709/Molly_uutxyb.jpg',
       bio: 'With a genuine love for hospitality, takes pride in connecting guests with the perfect stay experience.'
     },
+    
     {
-      name: 'Christine Mutei',
+      name: 'Christine Mutie',
       role: 'Procurement Officer',
       image: 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1769681710/Christine_z6qwzi.jpg',
-      bio: 'Born in Kenya, passionate about sharing African culture'
+      bio: 'Sources best‑in‑class suppliers and manages procurement operations to ensure high-quality, reliable logistics and guest-facing services across all safari experiences.'
     },
     {
       name: 'Timsheldon Oure',
-      role: 'IT Support Officer',
-      image: 'https://westus31-mediap.svc.ms/transform/thumbnail?provider=spo&farmid=194147&inputFormat=jpeg&cs=fFNQTw&docid=https%3A%2F%2Fmy.microsoftpersonalcontent.com%2F_api%2Fv2.0%2Fdrives%2Fb!UHvAJHRZv0uHtY6cWKy5LhPq4UG_8gRHvcdyi-WzL1rWc8fM8bbUQaApuV5hXGy_%2Fitems%2F01GBRSVX3D7YAWS4K76ND25RTQL7X642OJ%3Ftempauth%3Dv1e.eyJzaXRlaWQiOiIyNGMwN2I1MC01OTc0LTRiYmYtODdiNS04ZTljNThhY2I5MmUiLCJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvbXkubWljcm9zb2Z0cGVyc29uYWxjb250ZW50LmNvbUA5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQiLCJleHAiOiIxNzY4MzA1NjAwIn0.lF9j-wzYG6_hhVB0jwS0LQXa5eJEE1SErr8d1-oCdwjkOXLyc9UgtU4V8UoaftR6IbTIG0NAubliY6iHrSiqQlsFN_TzGZHMPNWBoNCourknpKySI-byNsoO67qmG7QX_bGG2YVgZC2T1XpO3DYzLq2FsRpGyxoPOinWEI-LGWN4N86OS6EpNOM2v0i6o91mG1cyOPnVHqqhWODTu9JRgLVYZHucvblSk5IS5wwmLFinKqT0vvbswXtlRehe5aGM20YwzGM_eH1NegtPMeTaXAIHbB9lmRcWPyHRwqK4OEURdhFritV3zF6f8K72gq0XTNnBD4_zrBsgyFtrVchw4hDKR1t3GryZ6fcPd_RaAPYmt34wtwYXuqKCo84wWJkdALaw4-FidoZD1lEnIzDZmu4AXponr952W-AXJmgrxr5G5dc1vWwo3lIH4o835uYO28bZ71CnaeboYCy_I2B3c2yV2zO-cEIhHfjTAJRTj7TYlZ_S2p3hA92oR54av_mP.kUmm9t2j-2pSTOyEAVheHWYhESz0GHvz_WZew44OWHE%26version%3DPublished&cb=63903809112&encodeFailures=1&width=503&height=755',
-      bio: 'Born in Kenya, passionate about sharing African culture'
+      role: 'IT Support Officer/Web Dev',
+      image: 'https://res.cloudinary.com/dfaakg2ds/image/upload/v1769681709/Tim_ueubsn.jpg',
+      bio: 'Keeps the website and systems running smoothly so the team can focus on delivering outstanding safari experiences.'
     }
   ];
 
@@ -722,7 +723,7 @@ export default function About() {
               
               {/* Founder Badge */}
               <div className="absolute top-4 left-4 z-20">
-                <Badge className="bg-[#749DD0] text-white border-0 px-3 py-1">Founder & CEO</Badge>
+                <Badge className="bg-[#749DD0] text-white border-0 px-3 py-1">Founder & Proud Owner</Badge>
               </div>
               
               {/* Content - Slides up on hover */}
@@ -891,7 +892,7 @@ export default function About() {
           </div>
 
           <div className="border-t border-[#48547C] mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-white/50">
-            <p>&copy; 2024 The Bush Collection. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} The Bush Collection. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0 text-sm">
               <a href="#" className="hover:text-[#92AAD1] transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-[#92AAD1] transition-colors">Terms of Service</a>

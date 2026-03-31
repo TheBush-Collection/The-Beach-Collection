@@ -7,6 +7,7 @@ export interface Property {
   name: string;
   location: string;
   description: string;
+  category?: string;
   type: string;
   basePricePerNight?: number;
   price?: number;
@@ -146,6 +147,8 @@ export const useBackendProperties = (options?: UseBackendPropertiesOptions) => {
             _id: prop._id as string,
             name: prop.name as string,
             location: (prop.location as string) || '',
+            // category: prefer explicit category fields, fallback to categoryName, tags, or type
+            category: (prop.category as string) || (prop.categoryName as string) || (Array.isArray(prop.tags) ? (prop.tags[0] as string) : '') || '',
             description: (prop.description as string) || '',
             type: (prop.type as string) || 'lodge',
             basePricePerNight: (prop.basePricePerNight as number) || 0,

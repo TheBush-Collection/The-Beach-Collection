@@ -44,8 +44,8 @@ export default function Login() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#EAF6FF] to-[#F8FBFF]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: '#749DD0' }}></div>
       </div>
     );
   }
@@ -55,18 +55,18 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F4FAFF] to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+          <h2 className="mt-6 text-3xl font-bold text-[#33343B]">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-[#48547C]">
             Login to access your bookings
           </p>
         </div>
 
-        <Card>
+        <Card className="rounded-2xl bg-white/90 shadow-2xl ring-1 ring-[#92AAD1]/10 backdrop-blur-md">
           <CardHeader>
             <CardTitle>Login</CardTitle>
           </CardHeader>
@@ -104,21 +104,21 @@ export default function Login() {
                 />
               </div>
               <div className="text-right text-sm">
-                <Link to="/forgot-password" className="text-yellow-500 hover:text-yellow-600">Forgot password?</Link>
+                <Link to="/forgot-password" className="text-[#749DD0] hover:text-[#48547C]">Forgot password?</Link>
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-yellow-500 hover:bg-yellow-600"
+                className="w-full bg-gradient-to-r from-[#749DD0] to-[#48547C] text-white shadow-lg hover:scale-105 transform-gpu transition-all"
                 disabled={isLoading}
               >
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
 
               <div className="text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[#48547C]">
                   Don't have an account?{' '}
-                  <Link to="/signup" className="text-yellow-500 hover:text-yellow-600 font-medium">
+                  <Link to="/signup" className="text-[#749DD0] hover:text-[#48547C] font-medium">
                     Sign up here
                   </Link>
                 </p>

@@ -87,6 +87,7 @@ const countryCodes = [
 
 interface RoomBooking {
   roomId: string;
+  roomName: string;
   quantity: number;
   guests: number;
 }
@@ -544,6 +545,7 @@ export default function BookNow() {
           
           const initialRoomBookings = rooms.map((room: Room) => ({
             roomId: room.id,
+            roomName: room.name || '',
             quantity: roomId === room.id && room.available ? 1 : 0,
             guests: roomId === room.id && room.available ? 1 : 0
           }));
@@ -715,6 +717,18 @@ export default function BookNow() {
     propertyId: bookingType === 'property' ? selectedProperty?.id : null,
     roomId: bookingType === 'property' ? selectedRoom?.id : null,
     packageId: bookingType === 'package' ? selectedPackage?.id : null,
+    // Pass full rooms array with names for backend storage
+    rooms: bookingType === 'property' ? getActiveRoomBookings().map(rb => {
+      const room = selectedProperty?.rooms?.find((r: Room) => r.id === rb.roomId);
+      const seasonalRate = seasonalRates[rb.roomId];
+      return {
+        roomId: rb.roomId,
+        roomName: rb.roomName || room?.name || '',
+        quantity: rb.quantity,
+        guests: rb.guests,
+        pricePerNightPerPerson: seasonalRate?.rate || room?.price || 0
+      };
+    }) : [],
     adults: bookingType === 'property' 
       ? Math.max(1, getTotalGuests() - Math.floor(getTotalGuests() * 0.3))
       : Math.max(1, bookingData.guests - Math.floor(bookingData.guests * 0.3)),

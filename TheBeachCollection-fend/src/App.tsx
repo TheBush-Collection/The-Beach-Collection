@@ -172,8 +172,8 @@ function AppContent() {
         <Route path="/payment" element={<Payment />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
         <Route path="/about" element={<About />} />
-        <Route path="/contacts" element={<Contact />} />
-        <Route path="/media-centers" element={<MediaCenter />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/media-center" element={<MediaCenter />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />

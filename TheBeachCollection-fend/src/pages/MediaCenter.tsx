@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,8 +41,20 @@ export default function MediaCenter() {
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'masonry' | 'grid'>('masonry');
+  const [viewMode, setViewMode] = useState<'parallax' | 'grid'>('parallax');
+  const [scrollY, setScrollY] = useState(0);
+  const scrollRef = useRef<number>(0);
   const { toast } = useToast();
+
+  // Track scroll position for parallax effect
+  useEffect(() => {
+    const onScroll = () => {
+      scrollRef.current = window.scrollY;
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Safely format a date string — returns a fallback when invalid
   const formatDateSafe = (dateStr?: string | null) => {
@@ -293,9 +305,9 @@ export default function MediaCenter() {
             {/* View Toggle */}
             <div className="flex items-center gap-2 bg-white/10 rounded-full p-1">
               <button
-                onClick={() => setViewMode('masonry')}
-                className={`p-2 rounded-full transition-all ${viewMode === 'masonry' ? 'bg-[#749DD0] text-white' : 'text-white/50 hover:text-white'}`}
-                title="Masonry View"
+                onClick={() => setViewMode('parallax')}
+                className={`p-2 rounded-full transition-all ${viewMode === 'parallax' ? 'bg-[#749DD0] text-white' : 'text-white/50 hover:text-white'}`}
+                title="Parallax View"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -312,15 +324,15 @@ export default function MediaCenter() {
       </div>
 
       {/* Media Gallery */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
+      <section className="max-w-[1600px] mx-auto px-4 py-12 overflow-hidden">
         {loading ? (
-          // Modern Loading Skeleton
-          <div className={viewMode === 'masonry' ? 'columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'}>
-            {Array.from({ length: 12 }).map((_, index) => (
-              <div 
+          // Modern Loading Skeleton — 4 columns
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 16 }).map((_, index) => (
+              <div
                 key={index}
-                className={`bg-white/5 rounded-3xl overflow-hidden animate-pulse ${viewMode === 'masonry' ? 'mb-4 break-inside-avoid' : ''}`}
-                style={{ height: viewMode === 'masonry' ? `${200 + (index % 3) * 100}px` : '250px' }}
+                className="bg-white/5 rounded-3xl overflow-hidden animate-pulse"
+                style={{ height: `${200 + (index % 3) * 80}px` }}
               >
                 <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5" />
               </div>
@@ -328,7 +340,7 @@ export default function MediaCenter() {
           </div>
         ) : filteredItems.length === 0 ? (
           // Empty State
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-20"
@@ -338,107 +350,168 @@ export default function MediaCenter() {
             </div>
             <h3 className="text-2xl font-semibold text-white mb-2">No media found</h3>
             <p className="text-white/60 mb-6">Try adjusting your search or filter criteria</p>
-            <Button 
+            <Button
               onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
               className="bg-[#749DD0] hover:bg-[#48547C] text-white rounded-full px-6"
             >
               Clear Filters
             </Button>
           </motion.div>
+        ) : viewMode === 'parallax' ? (
+          // ── Parallax Columns ──────────────────────────────────────────────
+          // Columns 1 & 3 drift upward on scroll-down; columns 2 & 4 drift downward.
+          (() => {
+            const SPEED = 0.12; // tweak to taste
+            const colCount = 4;
+            // Distribute items into 4 columns (round-robin)
+            const cols: MediaItem[][] = Array.from({ length: colCount }, () => []);
+            filteredItems.forEach((item, i) => cols[i % colCount].push(item));
+
+            return (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-start">
+                {cols.map((col, colIdx) => {
+                  // col 0 & 2 → scroll upward (negative offset), col 1 & 3 → scroll downward
+                  const direction = colIdx % 2 === 0 ? -1 : 1;
+                  const offset = scrollY * SPEED * direction;
+
+                  return (
+                    <div
+                      key={colIdx}
+                      style={{ transform: `translateY(${offset}px)`, willChange: 'transform', transition: 'transform 0.05s linear' }}
+                      className="flex flex-col gap-4"
+                    >
+                      {col.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white/5"
+                          style={{ height: `${220 + (idx % 3) * 80}px` }}
+                          onClick={() => handleMediaClick(item)}
+                        >
+                          {/* Image/Thumbnail */}
+                          <img
+                            src={item.thumbnail}
+                            alt={item.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+
+                          {/* Gradient Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity" />
+
+                          {/* Type Badge */}
+                          <div className="absolute top-3 left-3">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center backdrop-blur-md ${item.type === 'video' ? 'bg-red-500/80' : 'bg-white/20'}`}>
+                              {item.type === 'video' ? (
+                                <Play className="w-4 h-4 text-white fill-white" />
+                              ) : (
+                                <Image className="w-4 h-4 text-white" />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Featured Badge */}
+                          {item.featured && (
+                            <div className="absolute top-3 right-3">
+                              <Badge className="bg-gradient-to-r from-amber-400 to-amber-500 text-white border-0 px-2 py-0.5 rounded-full flex items-center gap-1 text-xs">
+                                <Sparkles className="w-3 h-3" />
+                                Featured
+                              </Badge>
+                            </div>
+                          )}
+
+                          {/* Content Overlay */}
+                          <div className="absolute bottom-0 left-0 right-0 p-4 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                            <Badge className="bg-[#749DD0]/80 text-white border-0 text-xs mb-1.5 rounded-full">
+                              {item.category}
+                            </Badge>
+                            <h3 className="font-bold text-white text-sm mb-1 line-clamp-1">{item.title}</h3>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1 text-xs text-white/60">
+                                <Calendar className="w-3 h-3" />
+                                {formatDateSafe(item.date)}
+                              </div>
+                              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleMediaClick(item); }}
+                                  className="w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center transition-colors"
+                                >
+                                  <Eye className="w-3.5 h-3.5 text-white" />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleDownload(item.url, item.title); }}
+                                  className="w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center transition-colors"
+                                >
+                                  <Download className="w-3.5 h-3.5 text-white" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()
         ) : (
-          // Masonry / Grid Layout
+          // ── Standard Grid ────────────────────────────────────────────────
           <AnimatePresence mode="wait">
             <motion.div
-              key={viewMode + selectedCategory}
+              key={selectedCategory + searchQuery}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className={viewMode === 'masonry' 
-                ? 'columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4' 
-                : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-              }
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
             >
-              {filteredItems.map((item, index) => {
-                // Vary heights for masonry effect
-                const heights = ['h-64', 'h-72', 'h-80', 'h-96', 'h-64', 'h-72'];
-                const heightClass = viewMode === 'masonry' ? heights[index % heights.length] : 'h-64';
-                
-                return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
-                    className={`group relative rounded-3xl overflow-hidden cursor-pointer ${viewMode === 'masonry' ? 'break-inside-avoid mb-4' : ''} ${heightClass}`}
-                    onClick={() => handleMediaClick(item)}
-                  >
-                    {/* Image/Thumbnail */}
-                    <img
-                      src={item.thumbnail}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity" />
-                    
-                    {/* Type Badge */}
-                    <div className="absolute top-4 left-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md ${
-                        item.type === 'video' ? 'bg-red-500/80' : 'bg-white/20'
-                      }`}>
-                        {item.type === 'video' ? (
-                          <Play className="w-5 h-5 text-white fill-white" />
-                        ) : (
-                          <Image className="w-5 h-5 text-white" />
-                        )}
-                      </div>
+              {filteredItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.04 }}
+                  className="group relative rounded-3xl overflow-hidden cursor-pointer h-64"
+                  onClick={() => handleMediaClick(item)}
+                >
+                  <img
+                    src={item.thumbnail}
+                    alt={item.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity" />
+                  <div className="absolute top-4 left-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md ${item.type === 'video' ? 'bg-red-500/80' : 'bg-white/20'}`}>
+                      {item.type === 'video' ? <Play className="w-5 h-5 text-white fill-white" /> : <Image className="w-5 h-5 text-white" />}
                     </div>
-
-                    {/* Featured Badge */}
-                    {item.featured && (
-                      <div className="absolute top-4 right-4">
-                        <Badge className="bg-gradient-to-r from-amber-400 to-amber-500 text-white border-0 px-3 py-1 rounded-full flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          Featured
-                        </Badge>
-                      </div>
-                    )}
-
-                    {/* Content Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                      <Badge className="bg-[#749DD0]/80 text-white border-0 text-xs mb-2 rounded-full">
-                        {item.category}
+                  </div>
+                  {item.featured && (
+                    <div className="absolute top-4 right-4">
+                      <Badge className="bg-gradient-to-r from-amber-400 to-amber-500 text-white border-0 px-3 py-1 rounded-full flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />Featured
                       </Badge>
-                      <h3 className="font-bold text-white text-lg mb-1 line-clamp-1">{item.title}</h3>
-                      <p className="text-white/70 text-sm line-clamp-2 mb-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {item.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-xs text-white/60">
-                          <Calendar className="w-3 h-3" />
-                          {formatDateSafe(item.date)}
-                        </div>
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleMediaClick(item); }}
-                            className="w-9 h-9 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center transition-colors"
-                          >
-                            <Eye className="w-4 h-4 text-white" />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleDownload(item.url, item.title); }}
-                            className="w-9 h-9 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center transition-colors"
-                          >
-                            <Download className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                    <Badge className="bg-[#749DD0]/80 text-white border-0 text-xs mb-2 rounded-full">{item.category}</Badge>
+                    <h3 className="font-bold text-white text-lg mb-1 line-clamp-1">{item.title}</h3>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-xs text-white/60">
+                        <Calendar className="w-3 h-3" />{formatDateSafe(item.date)}
+                      </div>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); handleMediaClick(item); }} className="w-9 h-9 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center transition-colors">
+                          <Eye className="w-4 h-4 text-white" />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDownload(item.url, item.title); }} className="w-9 h-9 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center transition-colors">
+                          <Download className="w-4 h-4 text-white" />
+                        </button>
                       </div>
                     </div>
-                  </motion.div>
-                );
-              })}
+                  </div>
+                </motion.div>
+              ))}
             </motion.div>
           </AnimatePresence>
         )}

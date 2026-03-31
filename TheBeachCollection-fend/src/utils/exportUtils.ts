@@ -1,4 +1,4 @@
-import { Booking } from '@/hooks/useBookings';
+﻿import { Booking } from '@/hooks/useBookings';
 
 // Updated CSV Export Function to work with AdminBookings structure
 export const exportToCSV = (bookings: any[], filename: string = 'bookings-export') => {
@@ -76,14 +76,14 @@ export const exportToPDF = (bookings: any[], filename: string = 'bookings-report
   // Calculate summary statistics
   const totalBookings = bookings.length;
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
-  const pendingBookings = bookings.filter(b => b.status === 'inquiry').length; // Map inquiry to pending for display
+  const pendingBookings = bookings.filter(b => b.status === 'pending').length; // Map inquiry to pending for display
   const cancelledBookings = bookings.filter(b => b.status === 'cancelled').length;
 
   // Calculate actual revenue (only paid amounts, including completed bookings that were previously paid)
   const totalRevenue = bookings.reduce((sum, booking) => {
-    if (booking.status === 'deposit-paid') {
+    if (booking.status === 'deposit_paid') {
       return sum + (booking.depositPaid || 0);
-    } else if (booking.status === 'fully-paid') {
+    } else if (booking.status === 'fully_paid') {
       return sum + (booking.total || 0);
     } else if (booking.status === 'completed') {
       // For completed bookings, include the amount that was actually paid
@@ -303,16 +303,16 @@ export const exportToPDF = (bookings: any[], filename: string = 'bookings-report
 export const getExportStats = (bookings: any[]) => {
   const total = bookings.length;
   const confirmed = bookings.filter(b => b.status === 'confirmed').length;
-  const pending = bookings.filter(b => b.status === 'inquiry').length;
+  const pending = bookings.filter(b => b.status === 'pending').length;
   const cancelled = bookings.filter(b => b.status === 'cancelled').length;
-  const depositPaid = bookings.filter(b => b.status === 'deposit-paid').length;
-  const fullyPaid = bookings.filter(b => b.status === 'fully-paid').length;
+  const depositPaid = bookings.filter(b => b.status === 'deposit_paid').length;
+  const fullyPaid = bookings.filter(b => b.status === 'fully_paid').length;
 
   // Calculate actual revenue received (including completed bookings that were previously paid)
   const totalRevenue = bookings.reduce((sum, booking) => {
-    if (booking.status === 'deposit-paid') {
+    if (booking.status === 'deposit_paid') {
       return sum + (booking.depositPaid || 0);
-    } else if (booking.status === 'fully-paid') {
+    } else if (booking.status === 'fully_paid') {
       return sum + (booking.total || 0);
     } else if (booking.status === 'completed') {
       // For completed bookings, include the amount that was actually paid

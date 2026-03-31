@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, Calendar, Users, Search, Filter, ChevronDown, ArrowRight, Waves, Building2, Sparkles, Heart, Shield, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useBackendProperties } from '@/hooks/useBackendProperties';
+import { useBackendProperties, Property } from '@/hooks/useBackendProperties';
 import PropertyCard from '@/components/PropertyCard';
 import OptimizedImage from '@/components/OptimizedImage';
 import ReviewsSection from '@/components/ReviewsSection';
@@ -23,7 +23,7 @@ export default function Index() {
     {
       place: 'Mwazaro',
       title: 'Witness The',
-      title2: 'Great Migration',
+      title2: 'Beauty of Coastal Kenya',
       description: 'Experience one of nature\'s most spectacular wonders on Kenya\'s coast. At Mwazaro Beach Lodge, you\'ll wake to the sound of the Indian Ocean, stroll along 300 metres of untouched beach and mangroves, and feel the true rhythm of coastal Kenya.',
       image: 'https://obbrmdtdcevckizykfzu.supabase.co/storage/v1/object/sign/images/Mwazaro-1.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zMmQyZDM5YS1mOGUyLTQwNGItOTJlMy1mZjc1ZGJjYmQ5ZDUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvTXdhemFyby0xLmpwZyIsImlhdCI6MTc2MzYyOTcwNCwiZXhwIjoxNzk1MTY1NzA0fQ.Ihw6Bmfj9cx-SsrMzKzH0bt-4Qej5J0sfxw-JgKWllA'
     },
@@ -104,7 +104,7 @@ export default function Index() {
     );
   }
 
-  // Filter properties based on search, type, and exclude Nairobi hotels
+  // Filter properties based on search, type, and include only Beach category (exclude Bush)
   const filteredProperties = properties.filter(property => {
     const matchesSearch =
       (property.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,21 +112,22 @@ export default function Index() {
 
     const matchesType = selectedType === 'all' || property.type === selectedType;
 
-    // Exclude Nairobi hotels
-    const isNairobiHotel =
-      property.location?.toLowerCase().includes('nairobi') ||
-      property.name?.toLowerCase().includes('nairobi');
+    // Require explicit Beach category (case-insensitive). If category is missing, do not show.
+    const category = (property as Property).category || '';
+    const isBeachCategory = String(category).toLowerCase().includes('beach');
 
-    return matchesSearch && matchesType && !isNairobiHotel;
+    // Exclude Bush category explicitly
+    const isBushCategory = String(category).toLowerCase().includes('bush');
+    return matchesSearch && matchesType && isBeachCategory && !isBushCategory;
   });
 
-  // Featured properties excluding Nairobi hotels
-  const featuredProperties = properties.filter(
-    property =>
-      property.featured &&
-      !property.location?.toLowerCase().includes('nairobi') &&
-      !property.name?.toLowerCase().includes('nairobi')
-  );
+  // Featured properties (Beach category, excluding Bush)
+  const featuredProperties = properties.filter(property => {
+    const category = (property as Property).category || '';
+    const isBeachCategory = String(category).toLowerCase().includes('beach');
+    const isBushCategory = String(category).toLowerCase().includes('bush');
+    return property.featured && isBeachCategory && !isBushCategory;
+  });
 
   // Filter out undefined/null types and get unique property types
   const propertyTypes = [
@@ -341,13 +342,7 @@ export default function Index() {
                 <div className="w-8 h-8 bg-[#749DD0]/10 rounded-lg flex items-center justify-center">
                   <Building2 className="w-4 h-4 text-[#749DD0]" />
                 </div>
-                <span className="text-sm"><strong className="text-[#33343B]">{properties.length}</strong> Properties</span>
-              </div>
-              <div className="flex items-center gap-2 text-[#48547C]">
-                <div className="w-8 h-8 bg-[#92AAD1]/10 rounded-lg flex items-center justify-center">
-                  <Waves className="w-4 h-4 text-[#92AAD1]" />
-                </div>
-                <span className="text-sm"><strong className="text-[#33343B]">5+</strong> Beach Locations</span>
+                <span className="text-sm"><strong className="text-[#33343B]">{filteredProperties.length}</strong> Properties</span>
               </div>
               <div className="flex items-center gap-2 text-[#48547C]">
                 <div className="w-8 h-8 bg-[#CFE7F8] rounded-lg flex items-center justify-center">
@@ -842,7 +837,7 @@ export default function Index() {
                     </Button>
                   </Link>
                   <Link to="/contact">
-                    <Button size="lg" variant="outline" className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 rounded-full text-lg font-semibold transition-all duration-300">
+                    <Button size="lg" variant="outline" className="border-2 border-white/30 text-black hover:bg-white/10 px-8 py-6 rounded-full text-lg font-semibold transition-all duration-300">
                       Contact Us
                     </Button>
                   </Link>
@@ -981,7 +976,7 @@ export default function Index() {
           
           {/* Bottom Bar */}
           <div className="border-t border-[#48547C]/50 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-[#CFE7F8]/50 text-sm">&copy; 2024 The Beach Collection. All rights reserved.</p>
+            <p className="text-[#CFE7F8]/50 text-sm">&copy; {new Date().getFullYear()} The Beach Collection. All rights reserved.</p>
             <div className="flex items-center space-x-6 text-sm text-[#CFE7F8]/50">
               <a href="#" className="hover:text-[#92AAD1] transition-colors">Privacy Policy</a>
               <span className="w-1 h-1 rounded-full bg-[#48547C]"></span>

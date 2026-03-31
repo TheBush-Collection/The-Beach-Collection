@@ -70,7 +70,7 @@ export default function ReviewSubmission() {
     }
   };
 
-  const allowedStatuses = new Set(['completed', 'fully-paid', 'fully_paid', 'confirmed', 'deposit-paid', 'deposit_paid']);
+  const allowedStatuses = new Set(['completed', 'fully_paid', 'confirmed', 'deposit_paid']);
 
   const getReviewableBookings = () =>
     bookings.filter((booking: any) =>
@@ -258,7 +258,7 @@ export default function ReviewSubmission() {
                 </Button>
               </DialogTrigger>
 
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Submit Your Review</DialogTitle>
                 </DialogHeader>

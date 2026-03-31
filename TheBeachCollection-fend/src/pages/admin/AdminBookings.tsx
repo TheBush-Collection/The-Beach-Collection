@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { differenceInDays } from 'date-fns';
 
 // Define the correct status types based on your database
-type BookingStatus = 'inquiry' | 'confirmed' | 'deposit-paid' | 'fully-paid' | 'completed' | 'cancelled';
+type BookingStatus = 'pending' | 'confirmed' | 'deposit_paid' | 'fully_paid' | 'completed' | 'cancelled';
 
 interface BookingRow {
   id: string;
@@ -76,13 +76,13 @@ export default function AdminBookings() {
 
   const getStatusBadge = (status: BookingStatus) => {
     switch (status) {
-      case 'inquiry':
-        return <Badge className="bg-blue-100 text-blue-800">Inquiry</Badge>;
+      case 'pending':
+        return <Badge className="bg-blue-100 text-blue-800">Pending</Badge>;
       case 'confirmed':
         return <Badge className="bg-green-100 text-green-800">Confirmed</Badge>;
-      case 'deposit-paid':
+      case 'deposit_paid':
         return <Badge className="bg-purple-100 text-purple-800">Deposit Paid</Badge>;
-      case 'fully-paid':
+      case 'fully_paid':
         return <Badge className="bg-green-100 text-green-800">Fully Paid</Badge>;
       case 'completed':
         return <Badge className="bg-gray-100 text-gray-800">Completed</Badge>;
@@ -96,7 +96,7 @@ export default function AdminBookings() {
   const handleStatusUpdate = async (bookingId: string, newStatus: BookingStatus) => {
     // Prevent editing of cancelled bookings (except for reconfirming)
     const currentBooking = supabaseBookings.find(b => b.id === bookingId);
-    if (currentBooking?.status === 'cancelled' && newStatus !== 'confirmed' && newStatus !== 'inquiry') {
+    if (currentBooking?.status === 'cancelled' && newStatus !== 'confirmed' && newStatus !== 'pending') {
       toast.error('Cannot edit cancelled bookings. Please reconfirm the booking first.');
       return;
     }
@@ -115,9 +115,9 @@ export default function AdminBookings() {
       };
 
       // When marking as fully paid, update payment fields
-      if (newStatus === 'fully-paid') {
-        // When changing from deposit-paid to fully-paid, update to full payment
-        if (currentBooking.status === 'deposit-paid') {
+      if (newStatus === 'fully_paid') {
+        // When changing from deposit_paid to fully_paid, update to full payment
+        if (currentBooking.status === 'deposit_paid') {
           updateData.deposit_paid = currentBooking.total_amount || 0;
           updateData.balance_due = 0;
         } else {
@@ -127,7 +127,7 @@ export default function AdminBookings() {
         }
       }
       // When marking as deposit-paid, set a reasonable deposit amount (e.g., 50% of total)
-      else if (newStatus === 'deposit-paid') {
+      else if (newStatus === 'deposit_paid') {
         const totalAmount = currentBooking.total_amount || 0;
         const depositAmount = totalAmount * 0.5; // 50% deposit
         updateData.deposit_paid = depositAmount;
@@ -139,11 +139,11 @@ export default function AdminBookings() {
       // Refresh the bookings data to ensure UI updates
       await refetch();
 
-      const statusMessages = {
-        'inquiry': 'Booking set to inquiry',
+      const statusMessages: Record<BookingStatus, string> = {
+        'pending': 'Booking set to pending',
         'confirmed': 'Booking confirmed successfully',
-        'deposit-paid': 'Deposit payment recorded',
-        'fully-paid': 'Full payment recorded',
+        'deposit_paid': 'Deposit payment recorded',
+        'fully_paid': 'Full payment recorded',
         'completed': 'Booking marked as completed',
         'cancelled': 'Booking cancelled'
       };
@@ -195,7 +195,7 @@ export default function AdminBookings() {
     const currentStatus: BookingStatus = booking.status as BookingStatus;
     
     switch (currentStatus) {
-      case 'inquiry':
+      case 'pending':
         return (
           <>
             <Button 
@@ -209,7 +209,7 @@ export default function AdminBookings() {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => handleStatusUpdate(booking.id, 'deposit-paid')}
+              onClick={() => handleStatusUpdate(booking.id, 'deposit_paid')}
               className="border-purple-500 text-purple-600 hover:bg-purple-50"
             >
               <CreditCard className="h-4 w-4 mr-1" />
@@ -232,7 +232,7 @@ export default function AdminBookings() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleStatusUpdate(booking.id, 'deposit-paid')}
+              onClick={() => handleStatusUpdate(booking.id, 'deposit_paid')}
               className="border-purple-500 text-purple-600 hover:bg-purple-50"
             >
               <CreditCard className="h-4 w-4 mr-1" />
@@ -241,7 +241,7 @@ export default function AdminBookings() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleStatusUpdate(booking.id, 'fully-paid')}
+              onClick={() => handleStatusUpdate(booking.id, 'fully_paid')}
               className="border-green-500 text-green-600 hover:bg-green-50"
             >
               <CircleDollarSign className="h-4 w-4 mr-1" />
@@ -258,13 +258,13 @@ export default function AdminBookings() {
           </>
         );
 
-      case 'deposit-paid':
+      case 'deposit_paid':
         return (
           <>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleStatusUpdate(booking.id, 'fully-paid')}
+              onClick={() => handleStatusUpdate(booking.id, 'fully_paid')}
               className="border-green-500 text-green-600 hover:bg-green-50"
             >
               <CircleDollarSign className="h-4 w-4 mr-1" />
@@ -290,7 +290,7 @@ export default function AdminBookings() {
           </>
         );
 
-      case 'fully-paid':
+      case 'fully_paid':
         return (
           <>
             <Button
@@ -305,7 +305,7 @@ export default function AdminBookings() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleStatusUpdate(booking.id, 'deposit-paid')}
+              onClick={() => handleStatusUpdate(booking.id, 'deposit_paid')}
               className="border-purple-500 text-purple-600 hover:bg-purple-50"
             >
               <CreditCard className="h-4 w-4 mr-1" />
@@ -328,7 +328,7 @@ export default function AdminBookings() {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => handleStatusUpdate(booking.id, 'fully-paid')}
+              onClick={() => handleStatusUpdate(booking.id, 'fully_paid')}
               className="border-green-500 text-green-600 hover:bg-green-50"
             >
               <CircleDollarSign className="h-4 w-4 mr-1" />
@@ -351,21 +351,11 @@ export default function AdminBookings() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleStatusUpdate(booking.id, 'inquiry')}
+              onClick={() => handleStatusUpdate(booking.id, 'pending')}
               className="border-blue-500 text-blue-600 hover:bg-blue-50"
             >
               <Clock className="h-4 w-4 mr-1" />
-              Set as Inquiry
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled
-              className="text-gray-400 border-gray-200"
-              title="Cancelled bookings cannot be edited directly"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Locked
+              Set as Pending
             </Button>
           </>
         );
@@ -418,29 +408,25 @@ export default function AdminBookings() {
     }) || [];
 
   const totalBookings = bookings?.length || 0;
-  const inquiryBookings = bookings?.filter(b => b.status === 'inquiry').length || 0;
+  const pendingBookings = bookings?.filter(b => b.status === 'pending').length || 0;
   const confirmedBookings = bookings?.filter(b => b.status === 'confirmed').length || 0;
-  const depositPaidBookings = bookings?.filter(b => b.status === 'deposit-paid').length || 0;
-  const fullyPaidBookings = bookings?.filter(b => b.status === 'fully-paid').length || 0;
+  const depositPaidBookings = bookings?.filter(b => b.status === 'deposit_paid').length || 0;
+  const fullyPaidBookings = bookings?.filter(b => b.status === 'fully_paid').length || 0;
   const completedBookings = bookings?.filter(b => b.status === 'completed').length || 0;
   const cancelledBookings = bookings?.filter(b => b.status === 'cancelled').length || 0;
   const totalRevenue = bookings?.reduce((sum, booking) => {
     // Include revenue from paid bookings (including completed ones that were previously paid)
-    // This represents actual cash flow - money that was received, not just potential income
-    if (booking.status === 'deposit-paid') {
+    if (booking.status === 'deposit_paid') {
       return sum + (booking.depositPaid || 0);
-    } else if (booking.status === 'fully-paid') {
+    } else if (booking.status === 'fully_paid') {
       return sum + (booking.total || 0);
     } else if (booking.status === 'completed') {
-      // For completed bookings, include the amount that was actually paid
-      // If depositPaid > 0, use that amount; otherwise use total (for fully paid completed bookings)
       if (booking.depositPaid && booking.depositPaid > 0) {
         return sum + (booking.depositPaid || 0);
       } else {
         return sum + (booking.total || 0);
       }
     }
-    // Don't include revenue from unpaid bookings (inquiry, confirmed, cancelled)
     return sum;
   }, 0) || 0;
   const transferBookings = bookings?.filter(b => b.airportTransfer).length || 0;
@@ -528,8 +514,8 @@ export default function AdminBookings() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Inquiries</p>
-                <p className="text-2xl font-bold text-blue-600">{inquiryBookings}</p>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-2xl font-bold text-blue-600">{pendingBookings}</p>
               </div>
               <Clock className="h-6 w-6 text-blue-500" />
             </div>
@@ -609,10 +595,10 @@ export default function AdminBookings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="inquiry">Inquiry</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="deposit-paid">Deposit Paid</SelectItem>
-                <SelectItem value="fully-paid">Fully Paid</SelectItem>
+                <SelectItem value="deposit_paid">Deposit Paid</SelectItem>
+                <SelectItem value="fully_paid">Fully Paid</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
@@ -818,7 +804,7 @@ export default function AdminBookings() {
                     {selectedBooking.status === 'cancelled' && (
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-600">Cancellation Reason:</span>
-                        <span className="text-gray-900">{selectedBooking.cancellation_reason || selectedBooking._raw?.cancellationReason || 'Not provided'}</span>
+                        <span className="text-gray-900">{selectedBooking._raw?.cancellationReason || 'Not provided'}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
@@ -908,7 +894,7 @@ export default function AdminBookings() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-6 border-t flex-wrap">
-                  {selectedBooking.status === 'inquiry' && (
+                  {selectedBooking.status === 'pending' && (
                     <>
                       <Button
                         onClick={() => {
@@ -923,7 +909,7 @@ export default function AdminBookings() {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          handleStatusUpdate(selectedBooking.id, 'deposit-paid');
+                          handleStatusUpdate(selectedBooking.id, 'deposit_paid');
                           setIsDetailsOpen(false);
                         }}
                         className="border-purple-500 text-purple-600 hover:bg-purple-50"
@@ -939,7 +925,7 @@ export default function AdminBookings() {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          handleStatusUpdate(selectedBooking.id, 'deposit-paid');
+                          handleStatusUpdate(selectedBooking.id, 'deposit_paid');
                           setIsDetailsOpen(false);
                         }}
                         className="border-purple-500 text-purple-600 hover:bg-purple-50"
@@ -950,7 +936,7 @@ export default function AdminBookings() {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          handleStatusUpdate(selectedBooking.id, 'fully-paid');
+                          handleStatusUpdate(selectedBooking.id, 'fully_paid');
                           setIsDetailsOpen(false);
                         }}
                         className="border-green-500 text-green-600 hover:bg-green-50"
@@ -961,12 +947,12 @@ export default function AdminBookings() {
                     </>
                   )}
 
-                  {selectedBooking.status === 'deposit-paid' && (
+                  {selectedBooking.status === 'deposit_paid' && (
                     <>
                       <Button
                         variant="outline"
                         onClick={() => {
-                          handleStatusUpdate(selectedBooking.id, 'fully-paid');
+                          handleStatusUpdate(selectedBooking.id, 'fully_paid');
                           setIsDetailsOpen(false);
                         }}
                         className="border-green-500 text-green-600 hover:bg-green-50"
@@ -988,7 +974,7 @@ export default function AdminBookings() {
                     </>
                   )}
 
-                  {selectedBooking.status === 'fully-paid' && (
+                  {selectedBooking.status === 'fully_paid' && (
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -1002,7 +988,7 @@ export default function AdminBookings() {
                     </Button>
                   )}
 
-                  {(selectedBooking.status === 'inquiry' || selectedBooking.status === 'confirmed' || selectedBooking.status === 'deposit-paid' || selectedBooking.status === 'fully-paid') && (
+                  {(selectedBooking.status === 'pending' || selectedBooking.status === 'confirmed' || selectedBooking.status === 'deposit_paid' || selectedBooking.status === 'fully_paid') && (
                     <Button
                       variant="destructive"
                       onClick={() => {

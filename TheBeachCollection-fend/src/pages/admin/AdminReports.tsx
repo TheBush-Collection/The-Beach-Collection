@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -130,61 +130,61 @@ interface PropertyData {
 
 // Country codes mapping for analytics
 const countryCodeMap: { [key: string]: { name: string; flag: string } } = {
-  '+1': { name: 'United States/Canada', flag: '🇺🇸' },
-  '+44': { name: 'United Kingdom', flag: '🇬🇧' },
-  '+33': { name: 'France', flag: '🇫🇷' },
-  '+49': { name: 'Germany', flag: '🇩🇪' },
-  '+39': { name: 'Italy', flag: '🇮🇹' },
-  '+34': { name: 'Spain', flag: '🇪🇸' },
-  '+31': { name: 'Netherlands', flag: '🇳🇱' },
-  '+41': { name: 'Switzerland', flag: '🇨🇭' },
-  '+43': { name: 'Austria', flag: '🇦🇹' },
-  '+32': { name: 'Belgium', flag: '🇧🇪' },
-  '+45': { name: 'Denmark', flag: '🇩🇰' },
-  '+46': { name: 'Sweden', flag: '🇸🇪' },
-  '+47': { name: 'Norway', flag: '🇳🇴' },
-  '+358': { name: 'Finland', flag: '🇫🇮' },
-  '+351': { name: 'Portugal', flag: '🇵🇹' },
-  '+30': { name: 'Greece', flag: '🇬🇷' },
-  '+48': { name: 'Poland', flag: '🇵🇱' },
-  '+420': { name: 'Czech Republic', flag: '🇨🇿' },
-  '+36': { name: 'Hungary', flag: '🇭🇺' },
-  '+7': { name: 'Russia', flag: '🇷🇺' },
-  '+86': { name: 'China', flag: '🇨🇳' },
-  '+81': { name: 'Japan', flag: '🇯🇵' },
-  '+82': { name: 'South Korea', flag: '🇰🇷' },
-  '+91': { name: 'India', flag: '🇮🇳' },
-  '+61': { name: 'Australia', flag: '🇦🇺' },
-  '+64': { name: 'New Zealand', flag: '🇳🇿' },
-  '+27': { name: 'South Africa', flag: '🇿🇦' },
-  '+254': { name: 'Kenya', flag: '🇰🇪' },
-  '+255': { name: 'Tanzania', flag: '🇹🇿' },
-  '+256': { name: 'Uganda', flag: '🇺🇬' },
-  '+250': { name: 'Rwanda', flag: '🇷🇼' },
-  '+20': { name: 'Egypt', flag: '🇪🇬' },
-  '+212': { name: 'Morocco', flag: '🇲🇦' },
-  '+234': { name: 'Nigeria', flag: '🇳🇬' },
-  '+233': { name: 'Ghana', flag: '🇬🇭' },
-  '+55': { name: 'Brazil', flag: '🇧🇷' },
-  '+52': { name: 'Mexico', flag: '🇲🇽' },
-  '+54': { name: 'Argentina', flag: '🇦🇷' },
-  '+56': { name: 'Chile', flag: '🇨🇱' },
-  '+57': { name: 'Colombia', flag: '🇨🇴' },
-  '+51': { name: 'Peru', flag: '🇵🇪' },
-  '+971': { name: 'UAE', flag: '🇦🇪' },
-  '+966': { name: 'Saudi Arabia', flag: '🇸🇦' },
-  '+965': { name: 'Kuwait', flag: '🇰🇼' },
-  '+974': { name: 'Qatar', flag: '🇶🇦' },
-  '+973': { name: 'Bahrain', flag: '🇧🇭' },
-  '+968': { name: 'Oman', flag: '🇴🇲' },
-  '+962': { name: 'Jordan', flag: '🇯🇴' },
-  '+961': { name: 'Lebanon', flag: '🇱🇧' },
-  '+60': { name: 'Malaysia', flag: '🇲🇾' },
-  '+65': { name: 'Singapore', flag: '🇸🇬' },
-  '+66': { name: 'Thailand', flag: '🇹🇭' },
-  '+84': { name: 'Vietnam', flag: '🇻🇳' },
-  '+63': { name: 'Philippines', flag: '🇵🇭' },
-  '+62': { name: 'Indonesia', flag: '🇮🇩' }
+  '+1': { name: 'United States/Canada', flag: 'ðŸ‡ºðŸ‡¸' },
+  '+44': { name: 'United Kingdom', flag: 'ðŸ‡¬ðŸ‡§' },
+  '+33': { name: 'France', flag: 'ðŸ‡«ðŸ‡·' },
+  '+49': { name: 'Germany', flag: 'ðŸ‡©ðŸ‡ª' },
+  '+39': { name: 'Italy', flag: 'ðŸ‡®ðŸ‡¹' },
+  '+34': { name: 'Spain', flag: 'ðŸ‡ªðŸ‡¸' },
+  '+31': { name: 'Netherlands', flag: 'ðŸ‡³ðŸ‡±' },
+  '+41': { name: 'Switzerland', flag: 'ðŸ‡¨ðŸ‡­' },
+  '+43': { name: 'Austria', flag: 'ðŸ‡¦ðŸ‡¹' },
+  '+32': { name: 'Belgium', flag: 'ðŸ‡§ðŸ‡ª' },
+  '+45': { name: 'Denmark', flag: 'ðŸ‡©ðŸ‡°' },
+  '+46': { name: 'Sweden', flag: 'ðŸ‡¸ðŸ‡ª' },
+  '+47': { name: 'Norway', flag: 'ðŸ‡³ðŸ‡´' },
+  '+358': { name: 'Finland', flag: 'ðŸ‡«ðŸ‡®' },
+  '+351': { name: 'Portugal', flag: 'ðŸ‡µðŸ‡¹' },
+  '+30': { name: 'Greece', flag: 'ðŸ‡¬ðŸ‡·' },
+  '+48': { name: 'Poland', flag: 'ðŸ‡µðŸ‡±' },
+  '+420': { name: 'Czech Republic', flag: 'ðŸ‡¨ðŸ‡¿' },
+  '+36': { name: 'Hungary', flag: 'ðŸ‡­ðŸ‡º' },
+  '+7': { name: 'Russia', flag: 'ðŸ‡·ðŸ‡º' },
+  '+86': { name: 'China', flag: 'ðŸ‡¨ðŸ‡³' },
+  '+81': { name: 'Japan', flag: 'ðŸ‡¯ðŸ‡µ' },
+  '+82': { name: 'South Korea', flag: 'ðŸ‡°ðŸ‡·' },
+  '+91': { name: 'India', flag: 'ðŸ‡®ðŸ‡³' },
+  '+61': { name: 'Australia', flag: 'ðŸ‡¦ðŸ‡º' },
+  '+64': { name: 'New Zealand', flag: 'ðŸ‡³ðŸ‡¿' },
+  '+27': { name: 'South Africa', flag: 'ðŸ‡¿ðŸ‡¦' },
+  '+254': { name: 'Kenya', flag: 'ðŸ‡°ðŸ‡ª' },
+  '+255': { name: 'Tanzania', flag: 'ðŸ‡¹ðŸ‡¿' },
+  '+256': { name: 'Uganda', flag: 'ðŸ‡ºðŸ‡¬' },
+  '+250': { name: 'Rwanda', flag: 'ðŸ‡·ðŸ‡¼' },
+  '+20': { name: 'Egypt', flag: 'ðŸ‡ªðŸ‡¬' },
+  '+212': { name: 'Morocco', flag: 'ðŸ‡²ðŸ‡¦' },
+  '+234': { name: 'Nigeria', flag: 'ðŸ‡³ðŸ‡¬' },
+  '+233': { name: 'Ghana', flag: 'ðŸ‡¬ðŸ‡­' },
+  '+55': { name: 'Brazil', flag: 'ðŸ‡§ðŸ‡·' },
+  '+52': { name: 'Mexico', flag: 'ðŸ‡²ðŸ‡½' },
+  '+54': { name: 'Argentina', flag: 'ðŸ‡¦ðŸ‡·' },
+  '+56': { name: 'Chile', flag: 'ðŸ‡¨ðŸ‡±' },
+  '+57': { name: 'Colombia', flag: 'ðŸ‡¨ðŸ‡´' },
+  '+51': { name: 'Peru', flag: 'ðŸ‡µðŸ‡ª' },
+  '+971': { name: 'UAE', flag: 'ðŸ‡¦ðŸ‡ª' },
+  '+966': { name: 'Saudi Arabia', flag: 'ðŸ‡¸ðŸ‡¦' },
+  '+965': { name: 'Kuwait', flag: 'ðŸ‡°ðŸ‡¼' },
+  '+974': { name: 'Qatar', flag: 'ðŸ‡¶ðŸ‡¦' },
+  '+973': { name: 'Bahrain', flag: 'ðŸ‡§ðŸ‡­' },
+  '+968': { name: 'Oman', flag: 'ðŸ‡´ðŸ‡²' },
+  '+962': { name: 'Jordan', flag: 'ðŸ‡¯ðŸ‡´' },
+  '+961': { name: 'Lebanon', flag: 'ðŸ‡±ðŸ‡§' },
+  '+60': { name: 'Malaysia', flag: 'ðŸ‡²ðŸ‡¾' },
+  '+65': { name: 'Singapore', flag: 'ðŸ‡¸ðŸ‡¬' },
+  '+66': { name: 'Thailand', flag: 'ðŸ‡¹ðŸ‡­' },
+  '+84': { name: 'Vietnam', flag: 'ðŸ‡»ðŸ‡³' },
+  '+63': { name: 'Philippines', flag: 'ðŸ‡µðŸ‡­' },
+  '+62': { name: 'Indonesia', flag: 'ðŸ‡®ðŸ‡©' }
 };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C'];
@@ -218,7 +218,7 @@ export default function AdminReports() {
     nights: differenceInDays(new Date(booking.check_out), new Date(booking.check_in)),
     pricePerNight: 0,
     total: booking.total_amount || 0,
-    status: booking.status as 'pending' | 'confirmed' | 'cancelled' | 'deposit-paid' | 'fully-paid' | 'completed' | 'inquiry',
+    status: booking.status as 'pending' | 'confirmed' | 'cancelled' | 'deposit_paid' | 'fully_paid' | 'completed' | 'pending',
     createdAt: booking.created_at,
     specialRequests: booking.special_requirements || '',
     airportTransfer: booking.transfer_details,
@@ -256,9 +256,9 @@ export default function AdminReports() {
     data.totalBookings = currentBookings.length;
     data.totalRevenue = currentBookings.reduce((sum, booking) => {
       // Only include revenue from paid bookings (including completed ones that were previously paid)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         return sum + (booking.depositPaid || 0);
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         return sum + (booking.total || 0);
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid
@@ -307,9 +307,9 @@ export default function AdminReports() {
 
     const previousRevenue = previousBookings.reduce((sum, booking) => {
       // Only include revenue from paid bookings (including completed ones that were previously paid)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         return sum + (booking.depositPaid || 0);
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         return sum + (booking.total || 0);
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid
@@ -360,9 +360,9 @@ export default function AdminReports() {
         
         occupancyByProperty[propertyName].occupied += nights;
         // Calculate actual revenue (only paid amounts)
-        if (booking.status === 'deposit-paid') {
+        if (booking.status === 'deposit_paid') {
           occupancyByProperty[propertyName].revenue += booking.depositPaid || 0;
-        } else if (booking.status === 'fully-paid') {
+        } else if (booking.status === 'fully_paid') {
           occupancyByProperty[propertyName].revenue += booking.total || 0;
         } else if (booking.status === 'completed') {
           // For completed bookings, include the amount that was actually paid
@@ -441,7 +441,7 @@ export default function AdminReports() {
           }
         }
         
-        const countryInfo = countryCodeMap[countryCode] || { name: 'Unknown', flag: '🌍' };
+        const countryInfo = countryCodeMap[countryCode] || { name: 'Unknown', flag: 'ðŸŒ' };
         const countryKey = `${countryInfo.flag} ${countryInfo.name}`;
         
         if (!countryStats[countryKey]) {
@@ -465,9 +465,9 @@ export default function AdminReports() {
         
         countryStats[countryKey].count += 1;
         // Calculate actual revenue (only paid amounts)
-        if (booking.status === 'deposit-paid') {
+        if (booking.status === 'deposit_paid') {
           countryStats[countryKey].revenue += booking.depositPaid || 0;
-        } else if (booking.status === 'fully-paid') {
+        } else if (booking.status === 'fully_paid') {
           countryStats[countryKey].revenue += booking.total || 0;
         } else if (booking.status === 'completed') {
           // For completed bookings, include the amount that was actually paid
@@ -528,9 +528,9 @@ export default function AdminReports() {
         dailyRevenue[date] = { revenue: 0, bookings: 0 };
       }
       // Calculate actual revenue (only paid amounts)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         dailyRevenue[date].revenue += booking.depositPaid || 0;
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         dailyRevenue[date].revenue += booking.total || 0;
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid
@@ -560,9 +560,9 @@ export default function AdminReports() {
         acc[source] = { revenue: 0, bookings: 0 };
       }
       // Calculate actual revenue (only paid amounts)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         acc[source].revenue += booking.depositPaid || 0;
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         acc[source].revenue += booking.total || 0;
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid
@@ -586,9 +586,9 @@ export default function AdminReports() {
       })).sort((a, b) => b.revenue - a.revenue),
       totalRevenue: bookings.reduce((sum, booking) => {
         // Calculate actual revenue (only paid amounts)
-        if (booking.status === 'deposit-paid') {
+        if (booking.status === 'deposit_paid') {
           return sum + (booking.depositPaid || 0);
-        } else if (booking.status === 'fully-paid') {
+        } else if (booking.status === 'fully_paid') {
           return sum + (booking.total || 0);
         } else if (booking.status === 'completed') {
           // For completed bookings, include the amount that was actually paid
@@ -636,9 +636,9 @@ export default function AdminReports() {
       
       propertyStats[propertyName].bookings += 1;
       // Calculate actual revenue (only paid amounts)
-      if (booking.status === 'deposit-paid') {
+      if (booking.status === 'deposit_paid') {
         propertyStats[propertyName].revenue += booking.depositPaid || 0;
-      } else if (booking.status === 'fully-paid') {
+      } else if (booking.status === 'fully_paid') {
         propertyStats[propertyName].revenue += booking.total || 0;
       } else if (booking.status === 'completed') {
         // For completed bookings, include the amount that was actually paid

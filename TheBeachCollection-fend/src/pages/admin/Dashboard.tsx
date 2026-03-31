@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+﻿import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -26,9 +26,9 @@ export default function AdminDashboard() {
   const totalBookings = bookings.length;
   const totalRevenue = bookings.reduce((sum, booking) => {
     // Include revenue from paid bookings (including completed ones that were previously paid)
-    if (booking.status === 'deposit-paid') {
+    if (booking.status === 'deposit_paid') {
       return sum + (booking.depositPaid || 0);
-    } else if (booking.status === 'fully-paid') {
+    } else if (booking.status === 'fully_paid') {
       return sum + (booking.total || 0);
     } else if (booking.status === 'completed') {
       // For completed bookings, include the amount that was actually paid
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-amber-600 rounded-lg p-8 text-white">
+      <div className="bg-gradient-to-r from-[#749DD0] to-[#48547C] rounded-2xl p-8 text-white shadow-xl">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
               Admin Dashboard
             </Badge>
             {isDemoData && (
-              <Badge variant="outline" className="ml-2 bg-orange-100 text-orange-800 border-orange-300">
+              <Badge variant="outline" className="ml-2 bg-white/10 text-white/80 border-white/20">
                 Demo Data
               </Badge>
             )}
@@ -132,13 +132,13 @@ export default function AdminDashboard() {
         </div>
         <div className="flex items-center gap-4 mt-4">
           <Link to="/admin/settings">
-            <Button variant="outline" size="sm" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+            <Button variant="outline" size="sm" className="bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-md">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
           </Link>
           <Link to="/">
-            <Button variant="outline" size="sm" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+            <Button variant="outline" size="sm" className="bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-md">
               View Website
             </Button>
           </Link>
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="rounded-2xl shadow-2xl ring-1 ring-[#92AAD1]/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -161,7 +161,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-2xl shadow-2xl ring-1 ring-[#92AAD1]/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-2xl shadow-2xl ring-1 ring-[#92AAD1]/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Properties</CardTitle>
               <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -183,12 +183,12 @@ export default function AdminDashboard() {
               <div className="text-2xl font-bold">{totalProperties}</div>
               <p className="text-xs text-muted-foreground">
                 Active safari locations
-                {isDemoData && <span className="text-orange-600 ml-1">(Demo: 8 total)</span>}
+                {isDemoData && <span className="text-white/90 ml-1">(Demo: 8 total)</span>}
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-2xl shadow-2xl ring-1 ring-[#92AAD1]/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Rooms</CardTitle>
               <Bed className="h-4 w-4 text-muted-foreground" />
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
               <div className="text-2xl font-bold">{totalRooms}</div>
               <p className="text-xs text-muted-foreground">
                 Across all properties
-                {isDemoData && <span className="text-orange-600 ml-1">(Demo: 24 total)</span>}
+                {isDemoData && <span className="text-white/90 ml-1">(Demo: 24 total)</span>}
               </p>
             </CardContent>
           </Card>

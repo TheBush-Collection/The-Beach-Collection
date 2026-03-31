@@ -9,8 +9,9 @@ import { MapPin, Phone, Mail, Clock, Send, MessageCircle, Calendar, Users, HelpC
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import FAQModal from '@/components/FAQModal';
-import { subscribeToMailchimp, parseFullName } from '@/lib/mailchimp';
+import { subscribeToMailchimp } from '@/lib/mailchimp';
 
+const BACKEND_BASE = import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -37,20 +38,27 @@ export default function Contact() {
     setIsSubmitting(true);
 
     try {
-      // Parse name into first and last name for Mailchimp
-      const { firstName, lastName } = parseFullName(formData.name);
-
-      // Subscribe to Mailchimp
-      const result = await subscribeToMailchimp({
-        email: formData.email,
-        firstName,
-        lastName,
-        phone: formData.phone,
-        company: formData.subject,
-        tags: formData.interests ? formData.interests.split(',').map(t => t.trim()) : [],
+      // Send contact form data to the backend, which saves the message
+      // and subscribes to Mailchimp for follow-up
+      const response = await fetch(`${BACKEND_BASE}/contact/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject,
+          preferredTravelDates: formData.travelDates,
+          groupSize: formData.groupSize,
+          safariInterests: formData.interests,
+          message: formData.message,
+          subscribe: true, // subscribe to Mailchimp for follow-up
+        }),
       });
 
-      if (result.success) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         toast.success('Thank you! We\'ll get back to you within 24 hours.');
         
         // Reset form
@@ -65,7 +73,7 @@ export default function Contact() {
           interests: ''
         });
       } else {
-        toast.error(result.error || 'Failed to submit form. Please try again.');
+        toast.error(data.error || 'Failed to submit form. Please try again.');
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -85,7 +93,7 @@ export default function Contact() {
     {
       icon: Mail,
       title: 'Email',
-      details: ['info@thebushcollection.africa', 'bookings@thebushcollection.africa'],
+      details: ['info@thebushcollection.africa', 'reservations@thebushcollection.africa'],
       description: 'We respond within 24 hours'
     },
     {
@@ -154,34 +162,35 @@ export default function Contact() {
         </div>
       )}
       {/* Hero Section */}
-      <section className="relative py-24 bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="relative py-24 bg-gradient-to-r from-[#749DD0] to-[#48547C] text-white overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyem0wLTMwVjBoLTEydjRoMTJ6TTI0IDI0aDEydi0ySDI0djJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             Contact Us
           </h1>
-          <p className="text-xl md:text-2xl text-cyan-100 max-w-3xl mx-auto mb-8">
+          <p className="text-xl md:text-2xl text-[#CFE7F8] max-w-3xl mx-auto mb-8">
             Ready to plan your dream safari? Get in touch with our expert team and let's create an unforgettable African adventure together.
           </p>
         </div>
       </section>
 
       {/* Contact Info Cards */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gradient-to-b from-[#F4FAFF] to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {contactInfo.map(({ icon: Icon, title, details, description }, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
+              <Card key={index} className="text-center rounded-2xl shadow-xl ring-1 ring-[#92AAD1]/10 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
                 <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="h-6 w-6 text-cyan-600" />
+                  <div className="w-12 h-12 bg-[#CFE7F8] rounded-full flex items-center justify-center mx-auto mb-4 flex-shrink-0">
+                    <Icon className="h-6 w-6 text-[#749DD0]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-                  <div className="space-y-1 mb-2">
+                  <h3 className="text-lg font-semibold text-[#33343B] mb-2">{title}</h3>
+                  <div className="space-y-1 mb-2 w-full">
                     {details.map((detail, idx) => (
-                      <p key={idx} className="text-gray-700 font-medium">{detail}</p>
+                      <p key={idx} className="text-[#48547C] font-medium text-sm break-words leading-snug">{detail}</p>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-500">{description}</p>
+                  <p className="text-sm text-[#92AAD1]">{description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -195,10 +204,10 @@ export default function Contact() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Contact Form */}
             <div>
-              <Card>
+              <Card className="rounded-2xl shadow-2xl ring-1 ring-[#92AAD1]/10 backdrop-blur-md">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <MessageCircle className="h-5 w-5 mr-2" />
+                  <CardTitle className="flex items-center text-[#33343B]">
+                    <MessageCircle className="h-5 w-5 mr-2 text-[#749DD0]" />
                     Send us a Message
                   </CardTitle>
                 </CardHeader>
@@ -304,7 +313,7 @@ export default function Contact() {
                       />
                     </div>
 
-                    <Button type="submit" className="w-full bg-cyan-500 hover:bg-cyan-600" disabled={isSubmitting}>
+                    <Button type="submit" className="w-full bg-gradient-to-r from-[#749DD0] to-[#48547C] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transform-gpu transition-all" disabled={isSubmitting}>
                       <Send className="h-4 w-4 mr-2" />
                       {isSubmitting ? 'Sending...' : 'Send Message'}
                     </Button>
@@ -317,31 +326,31 @@ export default function Contact() {
             <div className="space-y-8">
               {/* (Newsletter moved to floating button + modal) */}
               {/* Quick Actions */}
-              <Card>
+              <Card className="rounded-2xl shadow-2xl ring-1 ring-[#92AAD1]/10">
                 <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
+                  <CardTitle className="text-[#33343B]">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Link to="/packages">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Calendar className="h-4 w-4 mr-2" />
+                    <Button variant="outline" className="w-full justify-start border-[#92AAD1]/30 text-[#48547C] hover:bg-[#CFE7F8]/50 hover:border-[#749DD0] transition-colors">
+                      <Calendar className="h-4 w-4 mr-2 text-[#749DD0]" />
                       Browse Safari Packages
                     </Button>
                   </Link>
                   <Link to="/collections">
-                    <Button variant="outline" className="w-full justify-start">
-                      <MapPin className="h-4 w-4 mr-2" />
+                    <Button variant="outline" className="w-full justify-start border-[#92AAD1]/30 text-[#48547C] hover:bg-[#CFE7F8]/50 hover:border-[#749DD0] transition-colors">
+                      <MapPin className="h-4 w-4 mr-2 text-[#749DD0]" />
                       View Safari Properties
                     </Button>
                   </Link>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Users className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className="w-full justify-start border-[#92AAD1]/30 text-[#48547C] hover:bg-[#CFE7F8]/50 hover:border-[#749DD0] transition-colors">
+                    <Users className="h-4 w-4 mr-2 text-[#749DD0]" />
                     Request Group Quote
                   </Button>
                   <FAQModal
                     trigger={
-                      <Button variant="outline" className="w-full justify-start">
-                        <HelpCircle className="h-4 w-4 mr-2" />
+                      <Button variant="outline" className="w-full justify-start border-[#92AAD1]/30 text-[#48547C] hover:bg-[#CFE7F8]/50 hover:border-[#749DD0] transition-colors">
+                        <HelpCircle className="h-4 w-4 mr-2 text-[#749DD0]" />
                         Frequently Asked Questions
                       </Button>
                     }
@@ -350,9 +359,12 @@ export default function Contact() {
               </Card>
 
               {/* Emergency Contact */}
-              <Card className="bg-red-50 border-red-200">
+              <Card className="bg-red-50/80 border-red-200 rounded-2xl shadow-xl ring-1 ring-red-200/30">
                 <CardHeader>
-                  <CardTitle className="text-red-800">Emergency Contact</CardTitle>
+                  <CardTitle className="text-red-800 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" />
+                    Emergency Contact
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-red-700 mb-2">
@@ -370,14 +382,14 @@ export default function Contact() {
       </section>
 
       {/* Map Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gradient-to-b from-white to-[#F4FAFF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Visit Our Office</h2>
-            <p className="text-gray-600">Located in the heart of Adventure City</p>
+            <h2 className="text-3xl font-bold text-[#33343B] mb-4">Visit Our Office</h2>
+            <p className="text-[#48547C]">Located in the heart of Adventure City</p>
           </div>
           
-          <Card>
+          <Card className="rounded-2xl shadow-2xl ring-1 ring-[#92AAD1]/10 overflow-hidden">
       <CardContent className="p-0">
         <div className="rounded-lg overflow-hidden">
           <iframe
@@ -395,19 +407,19 @@ export default function Contact() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-cyan-600 text-white">
+      <section className="py-16 bg-gradient-to-r from-[#749DD0] to-[#48547C] text-white">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold mb-4">
             Ready to Start Planning?
           </h2>
-          <p className="text-xl text-cyan-100 mb-8">
+          <p className="text-xl text-[#CFE7F8] mb-8">
             Our safari experts are standing by to help create your perfect African adventure
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-cyan-600 hover:bg-gray-100 px-8 py-3">
+            <Button size="lg" className="bg-white text-[#48547C] hover:bg-[#CFE7F8] px-8 py-3 shadow-lg hover:shadow-xl hover:scale-105 transform-gpu transition-all">
               Call Now: +254116072343
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-cyan-600 px-8 py-3">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#48547C] px-8 py-3 shadow-lg hover:shadow-xl hover:scale-105 transform-gpu transition-all">
               Schedule Consultation
             </Button>
           </div>
@@ -415,29 +427,29 @@ export default function Contact() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-[#33343B] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">Safari Tours</h3>
-              <p className="text-gray-400 mb-4">
+              <p className="text-[#92AAD1] mb-4">
                 Creating unforgettable safari experiences across Africa's most spectacular destinations.
               </p>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link to="/packages" className="hover:text-white">Safari Packages</Link></li>
-                <li><Link to="/collections" className="hover:text-white">Properties</Link></li>
-                <li><Link to="/about" className="hover:text-white">About Us</Link></li>
-                <li><Link to="/faq" className="hover:text-white">FAQ</Link></li>
+              <ul className="space-y-2 text-[#92AAD1]">
+                <li><Link to="/packages" className="hover:text-white transition-colors">Safari Packages</Link></li>
+                <li><Link to="/collections" className="hover:text-white transition-colors">Properties</Link></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
+                <li><Link to="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4">Destinations</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-[#92AAD1]">
                 <li>Tanzania</li>
                 <li>Kenya</li>
               </ul>
@@ -445,7 +457,7 @@ export default function Contact() {
             
             <div>
               <h4 className="font-semibold mb-4">Contact</h4>
-              <ul className="space-y-2 text-gray-400">
+              <ul className="space-y-2 text-[#92AAD1]">
                 <li>+254116072343</li>
                 <li>info@thebushcollection.africa</li>
                 <li>42 Claret Close, Silanga Road, Karen.</li>
@@ -454,8 +466,8 @@ export default function Contact() {
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 The Bush Collection. All rights reserved.</p>
+          <div className="border-t border-[#48547C] mt-8 pt-8 text-center text-[#92AAD1]">
+            <p>&copy; {new Date().getFullYear()} The Bush Collection. All rights reserved.</p>
           </div>
         </div>
       </footer>

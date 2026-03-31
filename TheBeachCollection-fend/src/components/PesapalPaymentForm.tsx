@@ -43,6 +43,7 @@ export default function PaymentForm({ bookingDetails, customerDetails, onPayment
                             if ((!roomsPayload || roomsPayload.length === 0) && bookingDetails.roomId) {
                                 roomsPayload = [{
                                     roomId: bookingDetails.roomId,
+                                    roomName: bookingDetails.roomName || '',
                                     quantity: (bookingDetails.quantity || 1),
                                     guests: (bookingDetails.guests || 1),
                                     pricePerNightPerPerson: bookingDetails.roomPrice && bookingDetails.guests ? (bookingDetails.roomPrice / Math.max(1, bookingDetails.guests)) : (bookingDetails.roomPrice || 0)

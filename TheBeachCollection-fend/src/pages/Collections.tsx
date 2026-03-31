@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import slugify from '@/lib/slugify';
 import PropertyCard from '@/components/PropertyCard';
-import { useBackendProperties } from '@/hooks/useBackendProperties';
+import { useBackendProperties, Property } from '@/hooks/useBackendProperties';
 import { Link } from 'react-router-dom';
 
 const Collections = () => {
@@ -76,23 +76,38 @@ const Collections = () => {
     );
   }
 
-  // Get unique types and locations
-  const propertyTypes = [...new Set(properties.map(p => p.type).filter((type): type is string => type !== null && type !== undefined && typeof type === 'string'))];
-  const locations = [...new Set(properties.map(p => p.location).filter((location): location is string => location !== null && location !== undefined && typeof location === 'string'))];
+  // Get unique types and locations for Beach category only (exclude Bush)
+  const beachCandidates = properties.filter(p => {
+    const category = ((p as Property).category || '').toString().toLowerCase();
+    const isBeach = category.includes('beach');
+    const isBush = category.includes('bush');
+    return isBeach && !isBush;
+  });
 
-  // Filter properties
+  const propertyTypes = [...new Set(beachCandidates.map(p => p.type).filter((type): type is string => type !== null && type !== undefined && typeof type === 'string'))];
+  const locations = [...new Set(beachCandidates.map(p => p.location).filter((location): location is string => location !== null && location !== undefined && typeof location === 'string'))];
+
+  // Filter properties and enforce Beach-only rule (exclude Bush & Nairobi)
   const filteredProperties = properties.filter(property => {
     const matchesSearch = (property.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (property.location || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (property.description && property.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = selectedType === 'all' || property.type === selectedType;
     const matchesLocation = selectedLocation === 'all' || property.location === selectedLocation;
-    return matchesSearch && matchesType && matchesLocation;
+
+  // Require explicit Beach category (frontend uses category mapped by hook). If missing, property is excluded.
+  const category = ((property as Property).category || '').toString().toLowerCase();
+  const isBeachCategory = category.includes('beach');
+  const isBushCategory = category.includes('bush');
+
+  return matchesSearch && matchesType && matchesLocation && isBeachCategory && !isBushCategory;
   });
 
-  // Featured properties (first 4)
-  const featuredProperties = filteredProperties.slice(0, 4);
-  const remainingProperties = filteredProperties.slice(4);
+  // Featured properties: respect current search/filters while still enforcing Beach-only
+  const featuredProperties = filteredProperties.filter(property => property.featured).slice(0, 4);
+
+  // Remaining properties should exclude the featured ones to avoid duplicates
+  const remainingProperties = filteredProperties.filter(property => !featuredProperties.some(fp => fp.id === property.id));
 
   const safeCapitalize = (str: string | undefined) => {
     if (!str || typeof str !== 'string') return 'Unknown';
@@ -118,20 +133,20 @@ const Collections = () => {
       </div>
 
       {/* Hero Section - Modern Webflow Style */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+  <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{ 
-              backgroundImage: 'url(https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80)',
+              backgroundImage: 'url(https://res.cloudinary.com/dfaakg2ds/image/upload/v1773053078/Zanzibar_3_zuq2fw.jpg)',
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#33343B]/95 via-[#33343B]/70 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#33343B]/50 via-transparent to-transparent" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
+  <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left Content */}
             <motion.div
@@ -156,14 +171,13 @@ const Collections = () => {
               
               <p className="text-xl text-white/70 mb-8 leading-relaxed max-w-lg">
                 Explore our handpicked collection of luxury beach resorts and coastal retreats 
-                along Kenya's pristine shoreline.
+                along Kenya and Tanzania's pristine shoreline.
               </p>
 
               {/* Quick Stats */}
               <div className="flex flex-wrap gap-6 mb-10">
                 {[
                   { value: filteredProperties.length, label: 'Properties' },
-                  { value: locations.length, label: 'Destinations' },
                   { value: '4.9', label: 'Avg Rating' }
                 ].map((stat, i) => (
                   <div key={i} className="text-center">
@@ -182,11 +196,10 @@ const Collections = () => {
                   Explore Properties
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-                <Link to="/book">
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 rounded-full font-semibold text-lg backdrop-blur-sm"
+                <Link to="/book" aria-label="Book your stay">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-[#749DD0] to-[#48547C] text-white px-8 py-6 rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105 shadow-2xl focus:outline-none focus:ring-4 focus:ring-[#CFE7F8]/30"
                   >
                     Book Your Stay
                   </Button>
@@ -241,7 +254,7 @@ const Collections = () => {
       </section>
 
       {/* Floating Search & Filter Section */}
-      <section className="relative z-10 -mt-20 pb-12">
+  <section className="relative z-10 mt-8 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -250,7 +263,7 @@ const Collections = () => {
           >
             <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-2xl rounded-3xl overflow-hidden">
               <CardContent className="p-8">
-                <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex flex-col lg:flex-row gap-6">
                   {/* Search */}
                   <div className="flex-1 relative">
                     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#749DD0] h-5 w-5" />
@@ -263,7 +276,7 @@ const Collections = () => {
                   </div>
                   
                   {/* Type Filter */}
-                  <div className="lg:w-48">
+                  <div className="lg:w-56">
                     <select
                       className="w-full h-14 px-4 bg-[#CFE7F8]/20 border border-[#92AAD1]/20 text-[#33343B] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#749DD0] focus:border-transparent"
                       value={selectedType}
@@ -279,7 +292,7 @@ const Collections = () => {
                   </div>
                   
                   {/* Location Filter */}
-                  <div className="lg:w-48">
+                  <div className="lg:w-56">
                     <select
                       className="w-full h-14 px-4 bg-[#CFE7F8]/20 border border-[#92AAD1]/20 text-[#33343B] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#749DD0] focus:border-transparent"
                       value={selectedLocation}
@@ -405,7 +418,7 @@ const Collections = () => {
                   Our Beach Properties
                 </h2>
                 <p className="text-lg text-[#48547C]/70 max-w-xl">
-                  Discover handpicked luxury accommodations along Kenya's stunning coastline
+                  Discover handpicked luxury accommodations along Kenya and Tanzania's stunning coastline
                 </p>
               </div>
               <Link to="/book">
@@ -712,7 +725,7 @@ const Collections = () => {
                   </motion.div>
                   <p className="text-2xl text-white/80 font-medium mb-2">Beach Properties</p>
                   <p className="text-white/50 leading-relaxed">
-                    Handpicked luxury coastal retreats across Kenya's stunning shoreline
+                    Handpicked luxury coastal retreats across Kenya and Tanzania's stunning shoreline
                   </p>
                 </div>
               </div>
@@ -736,7 +749,7 @@ const Collections = () => {
                   <span className="block text-[#CFE7F8]">By The Numbers</span>
                 </h2>
                 <p className="text-white/60 max-w-lg">
-                  Your gateway to Kenya's finest coastal experiences, trusted by thousands of travelers.
+                  Your gateway to Kenya's and Tanzania's finest coastal experiences, trusted by thousands of travelers.
                 </p>
               </div>
             </motion.div>
@@ -925,13 +938,13 @@ const Collections = () => {
                   <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
                     <MapPin className="h-4 w-4 text-[#CFE7F8]" />
                   </div>
-                  <span className="text-sm">Diani Beach, Kenya</span>
+                  <span className="text-sm">Shimoni Beach, Kenya</span>
                 </li>
                 <li className="flex items-center gap-3 hover:text-[#CFE7F8] transition-colors">
                   <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
                     <Globe className="h-4 w-4 text-[#CFE7F8]" />
                   </div>
-                  <span className="text-sm">info@thebeachcollection.africa</span>
+                  <span className="text-sm">info@thebushcollection.africa</span>
                 </li>
               </ul>
             </div>
