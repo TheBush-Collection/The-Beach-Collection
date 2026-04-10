@@ -28,6 +28,83 @@ export const signup = async (req, res) => {
     user = await User.create({ fullName, email: normalizedEmail, phone, password });
     console.log('[signup] user created:', user._id, 'email:', user.email);
     const token = signToken(user._id);
+
+    // Send welcome email — fire-and-forget (don't block the response)
+    const frontendUrl = process.env.FRONTEND_URL || 'https://thebeachcollection.africa';
+    const welcomeHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f4faff; padding: 0;">
+        <!-- Header banner -->
+        <div style="background: linear-gradient(135deg, #749DD0 0%, #48547C 100%); padding: 40px 32px; text-align: center; border-radius: 12px 12px 0 0;">
+          <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 8px; font-weight: 800; letter-spacing: -0.5px;">
+            Welcome to The Beach Collection
+          </h1>
+          <p style="color: rgba(255,255,255,0.85); font-size: 14px; margin: 0;">
+            Kenya's finest coastal beach properties
+          </p>
+        </div>
+
+        <!-- Body -->
+        <div style="background: #ffffff; padding: 36px 32px; border-radius: 0 0 12px 12px; border: 1px solid #e8f0fb; border-top: none;">
+          <p style="color: #33343B; font-size: 16px; margin: 0 0 16px;">
+            Hi <strong>${user.fullName}</strong> 👋
+          </p>
+          <p style="color: #48547C; font-size: 14px; line-height: 1.7; margin: 0 0 24px;">
+            Your account has been created successfully. You can now browse and book from our handpicked collection of beachfront properties along the Kenyan coastline.
+          </p>
+
+          <!-- CTA button -->
+          <div style="text-align: center; margin: 28px 0;">
+            <a href="${frontendUrl}/collections"
+               style="background: linear-gradient(135deg, #749DD0, #48547C); color: #ffffff; padding: 14px 36px;
+                      border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px;
+                      display: inline-block; letter-spacing: 0.3px;">
+              Explore Properties
+            </a>
+          </div>
+
+          <!-- Quick links -->
+          <div style="border-top: 1px solid #e8f0fb; padding-top: 24px; margin-top: 24px;">
+            <p style="color: #92AAD1; font-size: 12px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">
+              Quick Links
+            </p>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 4px 0;">
+                  <a href="${frontendUrl}/collections" style="color: #749DD0; font-size: 13px; text-decoration: none;">🏖️ &nbsp;Browse Beach Properties</a>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0;">
+                  <a href="${frontendUrl}/book" style="color: #749DD0; font-size: 13px; text-decoration: none;">📅 &nbsp;Make a Booking</a>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0;">
+                  <a href="${frontendUrl}/my-bookings" style="color: #749DD0; font-size: 13px; text-decoration: none;">📋 &nbsp;View My Bookings</a>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px 32px;">
+          <p style="color: #92AAD1; font-size: 11px; margin: 0;">
+            The Beach Collection &bull; Kenya Coast, Indian Ocean<br/>
+            <a href="${frontendUrl}" style="color: #749DD0; text-decoration: none;">thebeachcollection.africa</a>
+          </p>
+        </div>
+      </div>
+    `;
+
+    sendViaMandrill({
+      to: user.email,
+      toName: user.fullName,
+      subject: `Welcome to The Beach Collection, ${user.fullName}!`,
+      html: welcomeHtml,
+      text: `Hi ${user.fullName},\n\nWelcome to The Beach Collection! Your account is ready.\n\nExplore our properties: ${frontendUrl}/collections\n\nThe Beach Collection Team`,
+    }).catch((err) => console.error('[signup] welcome email failed (non-fatal):', err.message));
+
     res.status(201).json({ token, user: { id: user._id, fullName: user.fullName, email: user.email } });
   } catch (err) {
     console.error('Signup error:', err);
